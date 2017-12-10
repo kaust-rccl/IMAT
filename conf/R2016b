@@ -1,0 +1,6 @@
+#%Module 1.0 -*- tcl -*-
+
+set app_dir /lustre/sw/xc40/matlab/R2016b
+prepend-path PATH $app_dir/bin
+setenv MATLABPATH [file dirname $app_dir]/common/kmat
+setenv MPICH_ROOT /opt/cray/mpt/default/gni/mpich-isv

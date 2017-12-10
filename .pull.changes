@@ -1,0 +1,8 @@
+#!/bin/bash
+
+_common_dir="${1}"
+
+cd "${_common_dir}/kmat2017"
+sudo git pull
+cd "${_common_dir}"
+sudo /usr/local/bin/fixperm rc-apps-a kmat2017

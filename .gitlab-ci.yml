@@ -1,0 +1,45 @@
+image: kcr.kaust.edu.sa/ubuntu:xenial
+
+stages:
+  - test
+  - deploy
+
+.test: &test_job
+  stage: test
+  tags:
+    - docker
+  script:
+    - cd testcases
+    - ./runtests.sh "${release}"
+
+test:R2017b:
+  variables:
+    release: "R2017b"
+  <<: *test_job
+
+deploy:zip:
+  stage: deploy
+  only:
+    - master
+  tags:
+    - docker
+  script:
+    - 'version_file=$(ls version*)'
+    - 'version=${version_file#version}'
+    - git archive --format zip --output "kmat.v$version.zip" master
+  artifacts:
+    name: "kmat.b$CI_JOB_ID"
+    paths:
+      - "kmat.*.zip"
+
+# Deploy code to RC development box
+# TODO - Do the same for Ibex cluster
+deploy:code:
+  stage: deploy
+  only:
+    - master
+  tags:
+    - devapps
+  script:
+    - ./.pull.changes /opt/share/matlab/common
+    - ./.pull.changes /wsintelapps/matlab/common

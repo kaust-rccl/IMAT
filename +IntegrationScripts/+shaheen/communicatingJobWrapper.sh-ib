@@ -1,0 +1,107 @@
+#!/bin/bash
+# This wrapper script is intended to be submitted to SLURM to support
+# communicating jobs.
+#
+# This script uses the following environment variables set by the submit MATLAB code:
+# MDCE_MATLAB_EXE     - the MATLAB executable to use
+# MDCE_MATLAB_ARGS    - the MATLAB args to use
+# MDCE_TOTAL_TASKS    - the number of workers to start
+#
+# The following environment variables are forwarded through mpiexec:
+# MDCE_DECODE_FUNCTION     - the decode function to use
+# MDCE_STORAGE_LOCATION    - used by decode function
+# MDCE_STORAGE_CONSTRUCTOR - used by decode function
+# MDCE_JOB_LOCATION        - used by decode function
+#
+# For backward compatability, this wrapper script uses the following SLURM environment variables:
+# SLURM_NODELIST           - instead of SLURM_JOB_NODELIST
+
+# Copyright 2016 KAUST
+# Antonio M. Arena (antonio.arena@kaust.edu.sa)
+# Copyright 2006-2015 The MathWorks, Inc.
+
+# Let's create a temporary dir in /scratch
+workdir=$(mktemp -p /scratch/$USER -d)
+
+# This hack fixes https://www.mathworks.com/support/bugreports/1539123
+# You get this error starting PCT:
+# Error using datetime (line 503)
+# ICU error: get canonical time zone ID, err='U_ILLEGAL_ARGUMENT_ERROR'.
+export TZ="Asia/Riyadh"
+
+# Let's use srun to execute MATLAB
+MPIEXEC="srun --hint=nomultithread"
+MPIEXEC_CODE=0
+
+# Work out how many processes to launch - set MACHINE_ARG
+chooseMachineArg() {
+    echo Node list: ${SLURM_NODELIST:?"Node list undefined"}
+    MACHINE_ARG="--mpi=pmi2 -l"
+}
+
+runMpiexec() {
+    # Let's HOME dir in /tmp otheriwse this won't work on a Cray
+    mkdir -p /tmp/$USER/.matlab
+    export HOME=/tmp/$USER
+
+    cd $workdir
+    echo "Running in $workdir"
+
+    # MATLAB ships MPICH2 version 1.4.1p1
+    # Cray MPICH for ISV is ABI compatible with MATLAB's MPICH API
+    _ver="$(basename ${MDCE_CMR})"
+    module use "${MDCE_CMR}/../common/kmat/conf"
+    module load "${_ver}"
+
+    if [ "X${MDCE_DEBUG}X" == "XtrueX" ]; then
+        # SRUN verbosity can go as high as -vvvvv
+        MPI_VERBOSE=-vv
+
+        # For each debug message, date and time, log level.  Don't have
+        #   MPI display the rank level since we're already doing it
+        # Could also add source file name (file), source line number (line)
+        #   scope (scope), pid (pid), & host (host)
+        export I_MPI_DEBUG=6,datetime,level,norank
+        export I_MPI_HYDRA_DEBUG=on
+    else
+        MPI_VERBOSE=
+    fi
+
+    CMD="$MPIEXEC $MPI_VERBOSE $MACHINE_ARG $MDCE_MATLAB_EXE $MDCE_MATLAB_ARGS"
+
+    ###################################################
+    # STRACE DEBUGGING
+    ###################################################
+    if [ "X${MDCE_STRACE}X" == "XtrueX" ]; then
+        STRACE_LAUNCHER_PFX="strace -o $STRACE_DIR/mpiexec_a -tt -f"
+        ## THIS PROBABLY ONLY WORKS WELL FOR 1 WORKER
+        STRACE_LAUNCHEE_PFX="strace -o $STRACE_DIR/worker_a -tt -f"
+        CMD="$STRACE_LAUNCHER_PFX $MPIEXEC $MACHINE_ARG $STRACE_LAUNCHEE_PFX $MDCE_MATLAB_EXE $MDCE_MATLAB_ARGS"
+    fi
+
+    # As a debug stage: echo the command line...
+    echo $CMD
+
+    # ...and then execute it
+    eval $CMD
+
+    MPIEXEC_CODE=${?}
+
+    # Last thing to do so we won't affect MPIEXEC_CODE
+    rm -rf $workdir
+}
+
+###################################################
+# STRACE DEBUGGING
+###################################################
+if [ "X${MDCE_STRACE}X" == "XtrueX" ]; then
+    STRACE_DIR=$HOME/matlab/stracelogs
+    test -d $STRACE_DIR || mkdir -p $STRACE_DIR
+fi
+
+trap "rm -rf $workdir" 0 1 2 15
+chooseMachineArg
+runMpiexec
+
+echo "Exiting with code: ${MPIEXEC_CODE}"
+exit ${MPIEXEC_CODE}

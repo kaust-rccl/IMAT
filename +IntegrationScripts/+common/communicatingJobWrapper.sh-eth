@@ -1,0 +1,197 @@
+#!/bin/bash
+# This wrapper script is intended to be submitted to SLURM to support communicating jobs.
+#
+# This script uses the following environment variables set by the submit MATLAB code:
+# MDCE_CMR            - the value of ClusterMatlabRoot (might be empty)
+# MDCE_MATLAB_EXE     - the MATLAB executable to use
+# MDCE_MATLAB_ARGS    - the MATLAB args to use
+#
+# The following environment variables are forwarded through mpiexec:
+# MDCE_DECODE_FUNCTION     - the decode function to use
+# MDCE_STORAGE_LOCATION    - used by decode function
+# MDCE_STORAGE_CONSTRUCTOR - used by decode function
+# MDCE_JOB_LOCATION        - used by decode function
+#
+# For backward compatability, this wrapper script uses the following SLURM environment variables:
+# SLURM_JOBID              - instead of SLURM_JOB_ID
+# SLURM_NODELIST           - instead of SLURM_JOB_NODELIST
+# SLURM_NNODES             - instead of SLURM_JOB_NUM_NODES
+
+# The following environment variables are set by SLURM
+# SLURM_JOB_ID             - number of nodes allocated to SLURM job
+# SLURM_JOB_NUM_NODES      - number of hosts allocated to SLURM job
+# SLURM_JOB_NODELIST       - list of hostnames allocated to SLURM job
+# SLURM_TASKS_PER_NODE     - list containing number of tasks allocated per host to SLURM job
+
+# Copyright 2016 KAUST
+# Antonio M. Arena (antonio.arena@kaust.edu.sa)
+# Copyright 2015 The MathWorks, Inc.
+
+# Create full paths to mw_smpd/mw_mpiexec if needed
+FULL_SMPD=${MDCE_CMR:+${MDCE_CMR}/bin/}mw_smpd
+FULL_MPIEXEC=${MDCE_CMR:+${MDCE_CMR}/bin/}mw_mpiexec
+SMPD_LAUNCHED_HOSTS=""
+MPIEXEC_CODE=0
+SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+export TZ="Asia/Riyadh"
+
+#########################################################################################
+# Work out where we need to launch SMPDs given our hosts file - defines SMPD_HOSTS
+chooseSmpdHosts() {
+echo -e "\nchooseSmpdHosts()"
+
+    # SLURM_JOB_NODELIST is required: the following line either echoes the value, or aborts.
+    echo Node file: ${SLURM_JOB_NODELIST:?"Node file undefined"}
+
+    # SMPD_HOSTS is a single line comma separated list of hostnames:
+    #   node136,node138,node140,node141,node142,node143,node157
+    #
+    # Our source of information is SLURM_JOB_NODELIST in the form:
+    #   cnode[136,138],cnode[140-43],cnode157
+    #
+    # 'scontrol show hostname ${SLURM_JOB_NODELIST}' produces multi-line list of hostnames:
+    #   node136
+    #   node138
+    #   node140
+    #   ...
+    #
+    # Pipe through "tr" to convert newlines to spaces.
+
+    SMPD_HOSTS=$(scontrol show hostname ${SLURM_JOB_NODELIST} | tr '\n', ' ')
+}
+
+#########################################################################################
+# Work out which port to use for SMPD
+chooseSmpdPort() {
+echo -e "\nchooseSmpdPort()"
+
+    # Extract the numeric part of SLURM_JOB_ID using sed to choose unique port for SMPD to run on.
+    # Assumes SLURM_JOB_ID starts with a number, such as: 15.slurm-server-host.domain.com
+    JOB_NUM=$(echo ${SLURM_JOB_ID:?"SLURM_JOB_ID undefined"} | sed 's#^\([0-9][0-9]*\).*$#\1#')
+    # Base smpd_port on the numeric part of the above
+    SMPD_PORT=$(expr $JOB_NUM % 10000 + 20000)
+    echo "Port no: ${SMPD_PORT}"
+}
+
+#########################################################################################
+# Work out how many processes to launch - set MACHINE_ARG
+#
+# Inputs:
+#   SLURM_JOB_NUM_NODES       SLURM environment variable: Number of nodes allocated to SLURM job
+#
+#   SMPD_HOSTS                Comma separated list of hostnames of nodes set by chooseSmpdHosts
+#
+#   SLURM_TASKS_PER_NODE      SLURM environment variable: Number of tasks allocated per node.
+#                             If two or more consecutive nodes have the same task count,
+#                             that count is followed by "(x#)" where "#" is the repetition count.
+# Output:
+#   MACHINE_ARG               Arguments to pass to mpiexec in the form:
+#                               -hosts <num_hosts> host1 tasks_on_host1 host2 tasks_on_host2
+#
+# Example
+# -------
+#   Inputs:
+#     SLURM_JOB_NUM_NODES        7
+#     SMPD_HOSTS                 node136,node138,node140,node141,node42,node143,node157
+#     SLURM_TASKS_PER_NODE       12(x4),7,9(x2)
+#   Output:
+#     -hosts 7 node136 12 node138 12 node140 12 node141 12 node142 7 node143 9 node157 9
+#
+# This is done by the tasks_per_node Python script.
+chooseMachineArg() {
+echo -e "\nchooseMachineArg()"
+
+    SDIR=${MDCE_STORAGE_LOCATION}/${MDCE_JOB_LOCATION}
+    TPN=$(${SDIR}/tasks_per_node.py "${SLURM_TASKS_PER_NODE}")
+    MACHINE_ARG="-hosts ${SLURM_JOB_NUM_NODES}"
+    idx=0
+    for host in ${SMPD_HOSTS}
+    do
+        idx=$(expr $idx + 1)
+        N=$(echo $TPN | cut -f $idx -d,)
+        MACHINE_ARG="${MACHINE_ARG} ${host} $N"
+    done
+    echo "Machine args: $MACHINE_ARG"
+}
+
+#########################################################################################
+# Now that we have launched the SMPDs, we must install a trap to ensure that
+# they are closed either in the case of normal exit, or job cancellation:
+# Default value of the return code
+cleanupAndExit() {
+echo -e "\ncleanupAndExit()"
+
+    echo "Stopping SMPD on ${SMPD_LAUNCHED_HOSTS} ..."
+
+    echo "srun --ntasks-per-node=1 --ntasks=${SLURM_JOB_NUM_NODES} ${FULL_SMPD} -shutdown -phrase MATLAB -port ${SMPD_PORT}"
+    srun --ntasks-per-node=1 --ntasks=${SLURM_JOB_NUM_NODES} ${FULL_SMPD} -shutdown -phrase MATLAB -port ${SMPD_PORT}
+
+    echo "Exiting with code: ${MPIEXEC_CODE}"
+    exit ${MPIEXEC_CODE}
+}
+
+#########################################################################################
+# Use srun to launch the SMPD daemons on each processor
+launchSmpds() {
+echo -e "\nlaunchSmpds()"
+
+    # Launch the SMPD processes on all hosts using srun
+    echo "Starting SMPD on ${SMPD_HOSTS} ..."
+
+    # If we don't specify -debug, the process will come back
+    # immediately, bringing the MPD down.  Set the debug level
+    # to 0, because we really don't want any debugging.
+
+    echo "srun --ntasks-per-node=1 --ntasks=$SLURM_JOB_NUM_NODES --cpu_bind=none ${FULL_SMPD} -phrase MATLAB -port ${SMPD_PORT} -debug 0&"
+    srun --ntasks-per-node=1 --ntasks=$SLURM_JOB_NUM_NODES --cpu_bind=none ${FULL_SMPD} -phrase MATLAB -port ${SMPD_PORT} -debug 0&
+    sleep $SLURM_JOB_NUM_NODES
+
+    echo "Show Ports Running Process Daemon"
+    for host in ${SMPD_HOSTS}
+    do
+        ${SSH_COMMAND} $host netstat -ap | grep ${SMPD_PORT}
+        SMPD_LAUNCHED_HOSTS="${SMPD_LAUNCHED_HOSTS} ${host}"
+    done
+
+    # Remove leading spaces
+    SMPD_LAUNCHED_HOSTS=${SMPD_LAUNCHED_HOSTS## }
+
+    # Remove trailing spaces
+    SMPD_LAUNCHED_HOSTS=${SMPD_LAUNCHED_HOSTS%% }
+
+    echo "All SMPDs launched"
+}
+
+#########################################################################################
+runMpiexec() {
+echo -e "\nrunMpiexec()"
+
+    CMD="${FULL_MPIEXEC} -phrase MATLAB -port ${SMPD_PORT} \
+        -l ${MACHINE_ARG} -genvlist \
+        MDCE_DECODE_FUNCTION,MDCE_STORAGE_LOCATION,MDCE_STORAGE_CONSTRUCTOR,MDCE_JOB_LOCATION,MDCE_DEBUG,MDCE_LICENSE_NUMBER,MLM_WEB_LICENSE,MLM_WEB_USER_CRED,MLM_WEB_ID,MDCE_MPI_EXT,TZ \
+        \"${MDCE_MATLAB_EXE}\" ${MDCE_MATLAB_ARGS}"
+
+    # As a debug stage: echo the command line...
+    echo $CMD
+
+    # ...and then execute it.
+    eval $CMD
+
+    MPIEXEC_CODE=${?}
+}
+
+#########################################################################################
+# Define the order in which we execute the stages defined above
+MAIN() {
+    trap "cleanupAndExit" 0 1 2 15
+    chooseSmpdHosts
+    chooseSmpdPort
+    launchSmpds
+    chooseMachineArg
+    runMpiexec
+
+    exit ${MPIEXEC_CODE}
+}
+
+# Call the MAIN loop
+MAIN
