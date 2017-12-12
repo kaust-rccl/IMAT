@@ -30,7 +30,7 @@ end
 
 % Determine the name of the cluster profile
 cluster = erase(cluster, '+');
-profile = [cluster ' ' release];
+profile = lProfileName(cluster, release);
 
 % Delete the old profile (if it exists)
 profiles = parallel.clusterProfiles();
@@ -98,29 +98,45 @@ cluster_name = names{idx};
 end
 
 
-function loginnode = lGetLoginNode(cluster)
+function desc = lProfileName(cluster, release)
 
-    switch lower(cluster)
-        case {'amd'}
-            loginnode = 'alogin.dragon.kaust.edu.sa';
-        case {'intel'}
-            loginnode = 'alogin.dragon.kaust.edu.sa';
-        case {'shaheen'}
-            loginnode = 'shaheen.hpc.kaust.edu.sa';
-        otherwise
-            error('Unsupported cluster %s', cluster)
-    end
+switch lower(cluster)
+    case {'amd', 'intel'}
+        desc = ['IBEX ' cluster ' ' release];
+    case {'shaheen'}
+        desc = ['SHAHEEN ' cluster ' ' release];
+    otherwise
+        error('Unsupported cluster %s', cluster)
+end
 
 end
 
 
-function scratch = lGetScratch(cluster, user, release)
+function matRoot = lGetMatlabRoot(cluster, release)
 
 switch lower(cluster)
-    case {'amd', 'intel'}
-        scratch = ['/scratch/dragon/' cluster '/' user '/Jobs/' release];
+    case {'amd'}
+        matRoot = ['/sw/csa/matlab/' release '/el7_binary'];
+    case {'intel'}
+        matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
     case {'shaheen'}
-        scratch = ['/scratch/' user '/Jobs/' release];
+        matRoot = ['/lustre/sw/xc40/matlab/' release];
+    otherwise
+        error('Unsupported cluster %s', cluster)
+end
+
+end
+
+
+function loginnode = lGetLoginNode(cluster)
+
+switch lower(cluster)
+    case {'amd'}
+        loginnode = 'alogin.dragon.kaust.edu.sa';
+    case {'intel'}
+        loginnode = 'ilogin.dragon.kaust.edu.sa';
+    case {'shaheen'}
+        loginnode = 'shaheen.hpc.kaust.edu.sa';
     otherwise
         error('Unsupported cluster %s', cluster)
 end
@@ -148,6 +164,20 @@ end
 end
 
 
+function scratch = lGetScratch(cluster, user, release)
+
+switch lower(cluster)
+    case {'amd', 'intel'}
+        scratch = ['/scratch/dragon/' cluster '/' user '/Jobs/' release];
+    case {'shaheen'}
+        scratch = ['/scratch/' user '/Jobs/' release];
+    otherwise
+        error('Unsupported cluster %s', cluster)
+end
+
+end
+
+
 function assembleClusterProfile(jfolder, rjsl, cluster, user, profile, def)
 
 % Create generic cluster profile
@@ -156,7 +186,7 @@ c = parallel.cluster.Generic;
 % Required mutual fields
 % Location of the Integration Scripts
 c.IntegrationScriptsLocation = fullfile(fileparts(mfilename('fullpath')), '+IntegrationScripts', '+common');
-c.NumWorkers = str2num(def.NumWorkers);
+c.NumWorkers = def.NumWorkers;
 c.OperatingSystem = 'unix';
 
 % Set common properties
@@ -196,22 +226,6 @@ parallel.defaultClusterProfile(profile);
 
 end
 
-
-function matRoot = lGetMatlabRoot(cluster, release)
-
-switch lower(cluster)
-    case {'amd'}
-        matRoot = ['/sw/csa/matlab/' release '/el7_binary'];
-    case {'intel'}
-        matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
-    case {'shaheen'}
-        matRoot = ['/lustre/sw/xc40/matlab/' release];
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
-
-end
-
 function cInfo = clusterInformation(cluster)
 
 switch lower(cluster)
@@ -234,7 +248,7 @@ end
 % Modify the below banner to display a message for users regarding
 % the cluster requirements (based on getAdditionalSubmitArguement).
 % If you wish to display this banner, uncomment the above
-function lNotifyUserOfCluster(cluster)  %#ok<DEFNU>
+function lNotifyUserOfCluster(cluster)
 
 switch lower(cluster)
     case {'amd', 'intel', 'shaheen'}
