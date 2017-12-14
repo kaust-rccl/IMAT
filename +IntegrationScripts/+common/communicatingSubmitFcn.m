@@ -163,7 +163,7 @@ jobName = sprintf('Job%d', job.ID);
 % for example to limit the number of nodes for a single job.
 additionalSubmitArgs = sprintf('--ntasks=%d', environmentProperties.NumberOfTasks);
 getCommonSubmitArgs = str2func(['@IntegrationScripts.' ClusterName '.getCommonSubmitArgs']);
-commonSubmitArgs = getCommonSubmitArgs(cluster, environmentProperties.NumberOfTasks);
+commonSubmitArgs = getCommonSubmitArgs(cluster, environmentProperties.NumberOfTasks, jobName);
 if ~isempty(commonSubmitArgs) && ischar(commonSubmitArgs)
     additionalSubmitArgs = strtrim([additionalSubmitArgs, ' ', commonSubmitArgs]) %#ok<NOPRT>
 end

@@ -1,4 +1,4 @@
-function commonSubmitArgs = getCommonSubmitArgs(cluster, numWorkers)
+function commonSubmitArgs = getCommonSubmitArgs(cluster, numWorkers, jobName)
 % Get any additional submit arguments for the Slurm sbatch command
 % that are common to both independent and communicating jobs.
 
@@ -10,18 +10,18 @@ commonSubmitArgs = '';
 
 validatedPropValue = str2func('@IntegrationScripts.common.validatedPropValue');
 
-jn = validatedPropValue(cluster, 'JobName', 'char');
-if isempty(jn)
-    jn = jobName;
+qn = validatedPropValue(cluster, 'JobName', 'char');
+if isempty(qn)
+    qn = jobName;
 end
-commonSubmitArgs = [' --job-name=' jn];
+commonSubmitArgs = [' --job-name=' qn];
 
 % Number of nodes/cores
 ppn = validatedPropValue(cluster, 'ProcsPerNode', 'double');
-if ~isempty(ppn) && ppn>0
+if ~isempty(ppn) && ppn > 0
     % Don't request more cores/node than workers
-    ppn = min(numWorkers,ppn);
-    commonSubmitArgs = sprintf('%s --ntasks-per-node=%d --cpus-per-task=2',commonSubmitArgs,ppn);
+    ppn = min(numWorkers, ppn);
+    commonSubmitArgs = sprintf('%s --ntasks-per-node=%d -n %d --cpus-per-task=2', commonSubmitArgs, ppn, numWorkers);
 else
     % Let SLURM figure out the number of nodes
     commonSubmitArgs = sprintf('%s -n %d --cpus-per-task=2', commonSubmitArgs, numWorkers);
@@ -81,9 +81,13 @@ if UseGpu == true
 else
     qn = validatedPropValue(cluster, 'QueueName', 'char');
 end
-if ~isempty(qn)
-    commonSubmitArgs = [commonSubmitArgs ' -p ' qn];
+
+qn = validatedPropValue(cluster, 'JobName', 'char');
+if isempty(qn)
+    qn = 'batch';
 end
+commonSubmitArgs = [commonSubmitArgs ' --partition=' qn];
+
 
 %% Physical Memory used by an entire node
 % mu = validatedPropValue(cluster, 'MemUsage', 'char');
