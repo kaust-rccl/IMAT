@@ -100,7 +100,7 @@ else
 end
 
 % Establish a new connection
-parameterMap = getOrCreateCredentialsParameterMapWithPort(clusterHost, username, useIdentityFile, identityFilename, fileHasPassphrase);
+parameterMap = getOrCreateCredentialsParameterMapWithPort(clusterHost, cluster, username, useIdentityFile, identityFilename, fileHasPassphrase);
 if useIdentityFile
     dctSchedulerMessage(1, '%s: Identity file %s will be used for remote connections', currFilename, username, identityFilename);
 end
@@ -167,7 +167,7 @@ if useIdentityFile==true
         cluster.saveProfile
     end
 
-    fileHasPassphrase = validatedPropValue(cluster, 'FileHasPassphrase', 'bool');
+    fileHasPassphrase = validatedPropValue(cluster, 'IdentityFileHasPassphrase', 'bool', false);
 
 end
 
@@ -238,7 +238,7 @@ else
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function credentials = getOrCreateCredentialsParameterMapWithPort(combinedHostname, username, useIdentityFile, identityFilename, fileHasPassphrase)
+function credentials = getOrCreateCredentialsParameterMapWithPort(combinedHostname, cluster, username, useIdentityFile, identityFilename, fileHasPassphrase)
 import com.mathworks.toolbox.distcomp.clusteraccess.*;
 import com.mathworks.toolbox.distcomp.remote.*;
 import com.mathworks.toolbox.distcomp.remote.spi.plugin.SshParameter;
@@ -251,6 +251,8 @@ if ischar(portStr)
     if isnumeric(portNum) && portNum > 0
         port = uint32(portNum);
     end
+else
+    port = uint32(port);
 end
 hostname = hostname{:};
 

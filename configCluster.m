@@ -212,6 +212,7 @@ c.AdditionalProperties.ProcsPerNode = 0;
 c.AdditionalProperties.QueueName = cInfo.defaultQueue;
 c.AdditionalProperties.UseIdentityFile = true;
 c.AdditionalProperties.IdentityFile = '';
+c.AdditionalProperties.IdentityFileHasPassphrase = false;
 c.AdditionalProperties.WallTime = '';
 c.AdditionalProperties.SshPort = 22;
 c.AdditionalProperties.DataParallelism = cInfo.parallelType;
