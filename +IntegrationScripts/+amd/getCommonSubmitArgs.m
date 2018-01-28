@@ -4,7 +4,7 @@ function commonSubmitArgs = getCommonSubmitArgs(cluster, numWorkers, jobName)
 
 % Copyright 2016-2017 The MathWorks, Inc.
 
-% wiki: 
+% wiki:
 
 commonSubmitArgs = '';
 
@@ -98,7 +98,7 @@ commonSubmitArgs = [commonSubmitArgs ' --partition=' qn];
 %end
 
 % Run on exclusive node
-ex = validatedPropValue(cluster, 'RequireExclusiveNode', 'char');
+ex = validatedPropValue(cluster, 'RequireExclusiveNode', 'bool');
 if ex == true
     commonSubmitArgs = [commonSubmitArgs ' --exclusive'];
 end
