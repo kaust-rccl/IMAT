@@ -185,7 +185,8 @@ c = parallel.cluster.Generic;
 
 % Required mutual fields
 % Location of the Integration Scripts
-c.IntegrationScriptsLocation = fullfile(fileparts(mfilename('fullpath')), '+IntegrationScripts', '+common');
+% c.IntegrationScriptsLocation = fullfile(fileparts(mfilename('fullpath')), '+IntegrationScripts', '+common');
+c.IntegrationScriptsLocation = fullfile(fileparts(mfilename('fullpath')), 'IntegrationScriptsRef');
 c.NumWorkers = def.NumWorkers;
 c.OperatingSystem = 'unix';
 
