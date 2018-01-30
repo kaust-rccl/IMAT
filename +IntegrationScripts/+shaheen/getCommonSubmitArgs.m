@@ -76,12 +76,11 @@ if UseGpu == true
     end
     % In case someone specifies it as a string.
     ngpus = str2num(ngpus); %#ok<ST2NM>
-    qn = [commonSubmitArgs 'defaultq --gres=gpu:' num2str(ngpus)];
+    qn = [commonSubmitArgs 'workq --gres=gpu:' num2str(ngpus)];
 else
     qn = validatedPropValue(cluster, 'QueueName', 'char');
 end
 
-qn = validatedPropValue(cluster, 'JobName', 'char');
 if isempty(qn)
     qn = 'workq';
 end

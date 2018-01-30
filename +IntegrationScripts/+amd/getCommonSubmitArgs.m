@@ -82,7 +82,6 @@ else
     qn = validatedPropValue(cluster, 'QueueName', 'char');
 end
 
-qn = validatedPropValue(cluster, 'JobName', 'char');
 if isempty(qn)
     qn = 'batch';
 end
