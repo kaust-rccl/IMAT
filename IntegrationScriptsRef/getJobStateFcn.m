@@ -1,4 +1,4 @@
-function state = getJobStateFcn(cluster, job, state)
+function state = getJobStateFcn(cluster, job, jobState)
 
 getJobStateFcn = @IntegrationScripts.common.deleteJobFcn;
-state = getJobStateFcn(cluster, job, state);
+state = getJobStateFcn(cluster, job, jobState);
