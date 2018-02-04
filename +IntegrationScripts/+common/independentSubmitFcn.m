@@ -67,11 +67,13 @@ if debugOn
 else
     mdceDebug = 'false';
 end
+ClusterName = validatedPropValue(cluster, 'ClusterName', 'char');
 variables = {'MDCE_DECODE_FUNCTION', decodeFunction; ...
     'MDCE_STORAGE_CONSTRUCTOR', environmentProperties.StorageConstructor; ...
     'MDCE_JOB_LOCATION', environmentProperties.JobLocation; ...
     'MDCE_MATLAB_EXE', environmentProperties.MatlabExecutable; ...
     'MDCE_MATLAB_ARGS', matlabArguments; ...
+    'MDCE_CLUSTER', lower(ClusterName); ...
     'MDCE_DEBUG', mdceDebug; ...
     'MLM_WEB_LICENSE', environmentProperties.UseMathworksHostedLicensing; ...
     'MLM_WEB_USER_CRED', environmentProperties.UserToken; ...
@@ -123,19 +125,20 @@ for ii = 1:numberOfTasks
     % Add the task location to the environment variables
     environmentVariables = [variables; ...
         {'MDCE_TASK_LOCATION', taskLocation}];
-    
+
     % Choose a file for the output. Please note that currently, JobStorageLocation refers
     % to a directory on disk, but this may change in the future.
     logFile = sprintf('%s%s%s', remoteJobDirectory, fileSeparator, sprintf('Task%d.log', tasks(ii).ID));
     quotedLogFile = sprintf('%s%s%s', quote, logFile, quote);
-    
+
     % Submit one task at a time
     jobName = sprintf('Job%d.%d', job.ID, tasks(ii).ID);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% CUSTOMIZATION MAY BE REQUIRED %%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    getCommonSubmitArgs = str2func(['@IntegrationScripts.' ClusterName '.getCommonSubmitArgs']);
+    commonSubmitArgs = getCommonSubmitArgs(cluster, 1, jobName);
     additionalSubmitArgs = '--ntasks=1';
-    commonSubmitArgs = getCommonSubmitArgs(cluster, 1);
     if ~isempty(commonSubmitArgs) && ischar(commonSubmitArgs)
         additionalSubmitArgs = strtrim([additionalSubmitArgs, ' ', commonSubmitArgs]) %#ok<NOPRT>
     end
@@ -154,7 +157,7 @@ dctSchedulerMessage(4, '%s: Starting mirror for job %d.', currFilename, job.ID);
 remoteConnection.startMirrorForJob(job);
 for ii = 1:numberOfTasks
     commandToRun = commandsToRun{ii};
-    
+
     % Now ask the cluster to run the submission command
     dctSchedulerMessage(4, '%s: Submitting job using command:\n\t%s', currFilename, commandToRun);
     % Execute the command on the remote host.
@@ -178,7 +181,7 @@ for ii = 1:numberOfTasks
             commandToRun, cmdOut);
     end
     jobIDs{ii} = extractJobId(cmdOut);
-    
+
     if isempty(jobIDs{ii})
         warning('parallelexamples:GenericSLURM:FailedToParseSubmissionOutput', ...
             'Failed to parse the job identifier from the submission output: "%s"', ...

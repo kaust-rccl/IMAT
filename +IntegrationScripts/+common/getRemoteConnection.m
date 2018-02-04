@@ -3,7 +3,6 @@ function remoteConnection = getRemoteConnection(cluster, clusterHost, remoteJobS
 %
 % getRemoteConnection will either retrieve a RemoteClusterAccess from the
 % cluster's UserData or it will create a new RemoteClusterAccess.
-%
 
 % Copyright 2010-2017 The MathWorks, Inc.
 
@@ -74,7 +73,7 @@ else
 end
 
 if ~needToCreateNewConnection
-    return;
+    return
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -100,18 +99,37 @@ else
 end
 
 % Establish a new connection
-parameterMap = getOrCreateCredentialsParameterMapWithPort(clusterHost, cluster, username, useIdentityFile, identityFilename, fileHasPassphrase);
 if useIdentityFile
     dctSchedulerMessage(1, '%s: Identity file %s will be used for remote connections', currFilename, username, identityFilename);
+    userArgs = {username, 'IdentityFilename', identityFilename, 'IdentityFileHasPassphrase', fileHasPassphrase};
+else
+    userArgs = {username};
 end
-userArgs = {username, 'PCTQECredentialMap', parameterMap};
 
 % Now connect and store the connection
 dctSchedulerMessage(1, '%s: Connecting to remote host %s', currFilename, clusterHost);
-remoteConnection = parallel.cluster.RemoteClusterAccess.getConnectedAccessWithMirror(clusterHost, remoteJobStorageLocation, userArgs{:});
+if makeLocationUnique
+    remoteJobStorageLocation = iBuildUniqueSubfolder(remoteJobStorageLocation, username, iGetFileSeparator(cluster));
+end
+
+% If using Shaheen, need to utilize an SSH tunnel, due to 2 factor
+% authentication. Otherwise, use the original connection.
+ClusterName = validatedPropValue(cluster, 'ClusterName', 'char');
+SshPort = validatedPropValue(cluster, 'SshPort', 'double');
+if strcmp(ClusterName, 'shaheen')
+    import com.mathworks.toolbox.distcomp.remote.spi.plugin.SshParameter;
+    parameterMap = parallel.internal.cluster.SshParameterMap();
+    if isempty(SshPort)
+        SshPort = 22;
+    end
+    parameterMap.put(SshParameter.PORT, java.lang.Integer(SshPort))
+    parameterMap.put(SshParameter.STRICT_HOST_KEY_CHECKING, false);
+    remoteConnection = parallel.cluster.RemoteClusterAccess.getConnectedAccessWithParameterMap(parameterMap, clusterHost, remoteJobStorageLocation, userArgs{:});
+else
+    remoteConnection = parallel.cluster.RemoteClusterAccess.getConnectedAccessWithMirror(clusterHost, remoteJobStorageLocation, userArgs{:});
+end
 dctSchedulerMessage(5, '%s: Storing remote connection in cluster''s user data.', currFilename);
 cluster.UserData.RemoteConnection = remoteConnection;
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [username, useIdentityFile, identityFilename, fileHasPassphrase] = iGetCredentialsFromUI(clusterHost, cluster)
@@ -171,7 +189,6 @@ if useIdentityFile==true
 
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [username, useIdentityFile, identityFilename, fileHasPassphrase] = iGetCredentialsFromCommandLine(clusterHost, cluster)
 % Function to get the user credentials from the command line
@@ -212,10 +229,9 @@ if useIdentityFile==true
 
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function returnValue = iLoopUntilValidStringInput(message, validValues)
-%Function to loop until a valid response is obtained user input
+% Function to loop until a valid response is obtained user input
 returnValue = '';
 
 while isempty(returnValue) || ~any(strcmpi(returnValue, validValues))
@@ -224,88 +240,15 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function subfolder = iBuildUniqueSubfolder(remoteJobStorageLocation, username, fileSeparator)
-%Function to build unique location using username and MATLAB release version
+% Function to build unique location using username and MATLAB release version
 release = ['R' version('-release')];
 subfolder = [remoteJobStorageLocation fileSeparator username fileSeparator release];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function fileSeparator = iGetFileSeparator(cluster)
-%Function to return file separator for cluster operating system
+% Function to return file separator for cluster operating system
 if strcmpi(cluster.OperatingSystem, 'unix')
     fileSeparator = '/';
 else
     fileSeparator = '\';
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function credentials = getOrCreateCredentialsParameterMapWithPort(combinedHostname, cluster, username, useIdentityFile, identityFilename, fileHasPassphrase)
-import com.mathworks.toolbox.distcomp.clusteraccess.*;
-import com.mathworks.toolbox.distcomp.remote.*;
-import com.mathworks.toolbox.distcomp.remote.spi.plugin.SshParameter;
-[hostname, portStr] = strsplit(combinedHostname, ':');
-% We've modified ClusterInfo to add an SshPort value, so we'll use that
-% default port=22;
-port = validatedPropValue(cluster, 'SshPort', 'double');
-if ischar(portStr)
-    portNum = str2num(portStr); %#ok<ST2NM>
-    if isnumeric(portNum) && portNum > 0
-        port = uint32(portNum);
-    end
-else
-    port = uint32(port);
-end
-hostname = hostname{:};
-
-dctSchedulerMessage(6, 'Using username %s to connect to %s on port %d', username, hostname, port);
-
-% Do an explicit conversion of the username to a java string because
-% something goes wrong with the char->string conversion when the MATLAB
-% char has only 1 character.
-javaUsername = java.lang.String(username);
-
-credentials = ParameterMap();
-credentials.put(SshParameter.STRICT_HOST_KEY_CHECKING, SshParameter.STRICT_HOST_KEY_CHECKING.getSuggestedValue());
-credentials.put(SshParameter.PORT, port);
-credentialParameters = ParameterMap();
-
-if useIdentityFile
-    keyFile= java.io.File(identityFilename);
-    credentialParameters.put(IdentityFileCredentialDescription.USERNAME, javaUsername);
-    credentialParameters.put(IdentityFileCredentialDescription.IDENTITY_FILE, keyFile);
-    if fileHasPassphrase
-        passphraseMsg = getString(message('parallel:cluster:EnterPassphraseForIdentityFile', identityFilename));
-        keyfilePassPhrase = solicitPassword(passphraseMsg);
-        credentialParameters.put(IdentityFileCredentialDescription.PASSPHRASE, keyfilePassPhrase);
-    end
-    credentials.put(SshParameter.SSH_CREDENTIAL, IdentityFileCredentialDescription.INSTANCE.create(credentialParameters));
-else
-    passwordMsg = getString(message('parallel:cluster:EnterPasswordForUserOnMachine', username, hostname));
-    password = solicitPassword(passwordMsg);
-    credentialParameters.put(PasswordCredentialDescription.USERNAME, javaUsername);
-    credentialParameters.put(PasswordCredentialDescription.PASSWORD, password);
-    credentials.put(SshParameter.SSH_CREDENTIAL, PasswordCredentialDescription.INSTANCE.create(credentialParameters));
-end
-
-function password = solicitPassword(promptMsg)
-if com.mathworks.jmi.Support.useSwing()
-    passwordField = javaObjectEDT('javax.swing.JPasswordField',40);
-    result = javaMethodEDT('showConfirmDialog','javax.swing.JOptionPane', ...
-                           [], passwordField, promptMsg, ...
-                           javax.swing.JOptionPane.OK_CANCEL_OPTION, ...
-                           javax.swing.JOptionPane.PLAIN_MESSAGE);
-    if result == javax.swing.JOptionPane.OK_OPTION
-        passwordString =  java.lang.String(passwordField.getPassword());
-    else
-        error(message('parallel:cluster:RemoteClusterAccessNoPassword'));
-    end
-else
-    passwordChars = parallel.internal.readPassword(promptMsg);
-    %if passwordChars is a java.lang.Exception then error
-    if isa(passwordChars, 'java.lang.Exception')
-        msg = char(passwordChars.getMessage());
-        error(message('parallel:cluster:RemoteClusterAccessProblemGettingPassword', msg));
-    end
-    passwordString = java.lang.String(passwordChars);
-end
-
-password = com.mathworks.toolbox.distcomp.remote.Password(passwordString);

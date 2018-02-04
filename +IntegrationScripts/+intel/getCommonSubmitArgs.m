@@ -10,7 +10,7 @@ commonSubmitArgs = '';
 
 validatedPropValue = str2func('@IntegrationScripts.common.validatedPropValue');
 
-jn = validatedPropValue(cluster, 'JobName', 'string');
+jn = validatedPropValue(cluster, 'JobName', 'char');
 if isempty(jn)
     jn = jobName;
 end
@@ -36,8 +36,15 @@ wt = validatedPropValue(cluster, 'WallTime', 'char');
 if ~isempty(wt)
     commonSubmitArgs = [commonSubmitArgs ' -t ' wt];
 else
-    emsg = sprintf('\n\tMust provide a wall time. E.g. 1 hour\n\n\t>> ClusterInfo.setWallTime(''0-1'')\n\tAcceptable time formats include "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds"');
-    error(emsg) %#ok<SPERR>
+    errorMsg = sprintf('\n\tMust provide a wall time. E.g. 1 hour\n',...
+                       '\n\t\t>> %% E.g. set wall time to 1 hour', ...
+                       '\n\t\t>> c = parcluster;', ...
+                       '\n\t\t>> c.AdditionalProperties.WallTime = (''0-1'')', ...
+                       '\n\t\t>> c.saveProfile', ...
+                       '\n\t\tAcceptable time formats include:\n \t\t"minutes",', ...
+                       ' "minutes:seconds", "hours:minutes:seconds", "days-hours",', ...
+                       '"days-hours:minutes" and "days-hours:minutes:seconds"\n\n']);
+    error(errorMsg)
 end
 
 % % Partition / Check for GPU
@@ -79,11 +86,7 @@ if UseGpu == true
     ngpus = str2num(ngpus); %#ok<ST2NM>
     qn = [commonSubmitArgs 'batch --gres=gpu:' num2str(ngpus)];
 else
-    qn = validatedPropValue(cluster, 'QueueName', 'char');
-end
-
-if isempty(qn)
-    qn = 'batch';
+    qn = validatedPropValue(cluster, 'QueueName', 'char', 'batch');
 end
 commonSubmitArgs = [commonSubmitArgs ' --partition=' qn];
 
