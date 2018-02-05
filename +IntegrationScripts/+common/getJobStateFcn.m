@@ -1,4 +1,4 @@
-function state = getJobStateFcn(cluster, job, jobState)
+function state = getJobStateFcn(cluster, job, state)
 %GETJOBSTATEFCN Gets the state of a job from Slurm
 %
 % Set your cluster's IntegrationScriptsLocation to the parent folder of this
@@ -33,7 +33,7 @@ catch err
     throw(ex);
 end
 % Shortcut if the job state is already finished or failed
-jobInTerminalState = strcmp(jobState, 'finished') || strcmp(jobState, 'failed');
+jobInTerminalState = strcmp(state, 'finished') || strcmp(state, 'failed');
 % and we have already done the last mirror
 if jobInTerminalState && hasDoneLastMirror
     return;
