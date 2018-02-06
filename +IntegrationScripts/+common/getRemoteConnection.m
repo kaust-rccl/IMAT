@@ -115,13 +115,10 @@ end
 % If using Shaheen, need to utilize an SSH tunnel, due to 2 factor
 % authentication. Otherwise, use the original connection.
 ClusterName = validatedPropValue(cluster, 'ClusterName', 'char');
-SshPort = validatedPropValue(cluster, 'SshPort', 'double');
+SshPort = validatedPropValue(cluster, 'SshPort', 'double', 22);
 if strcmp(ClusterName, 'shaheen')
     import com.mathworks.toolbox.distcomp.remote.spi.plugin.SshParameter;
     parameterMap = parallel.internal.cluster.SshParameterMap();
-    if isempty(SshPort)
-        SshPort = 22;
-    end
     parameterMap.put(SshParameter.PORT, java.lang.Integer(SshPort))
     parameterMap.put(SshParameter.STRICT_HOST_KEY_CHECKING, false);
     remoteConnection = parallel.cluster.RemoteClusterAccess.getConnectedAccessWithParameterMap(parameterMap, clusterHost, remoteJobStorageLocation, userArgs{:});
