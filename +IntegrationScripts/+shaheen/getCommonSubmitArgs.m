@@ -98,8 +98,7 @@ commonSubmitArgs = [commonSubmitArgs ' --partition=' qn];
 %end
 
 % Run on exclusive node
-ex = validatedPropValue(cluster, 'RequireExclusiveNode', 'bool');
-if ex == true
+if validatedPropValue(cluster, 'RequiresExclusiveNode', 'bool', false)
     commonSubmitArgs = [commonSubmitArgs ' --exclusive'];
 end
 
