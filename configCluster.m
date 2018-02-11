@@ -30,11 +30,10 @@ end
 
 % Determine the name of the cluster profile
 cluster = erase(cluster, '+');
-profile = lProfileName(cluster, release);
 
 % Delete the old profile (if it exists)
 profiles = parallel.clusterProfiles();
-idx = strcmp(profiles, profile);
+idx = strcmp(profiles, cluster);
 ps = parallel.Settings;
 ws = warning;
 warning off
@@ -62,7 +61,7 @@ end
 % Configure the user's remote storage location and assemble the cluster profile
 user = lower(char(java.lang.System.getProperty('user.name')));
 rjsl = lGetScratch(cluster, user, release);
-assembleClusterProfile(jfolder, rjsl, cluster, user, profile, def);
+assembleClusterProfile(jfolder, rjsl, cluster, user, def);
 
 % Uncomment this if you want to display a banner for users.
 lNotifyUserOfCluster(upper(cluster))
@@ -92,19 +91,18 @@ while ~selected
     idx = input(sprintf('Select a cluster [1-%d]: ', len));
     selected = idx >= 1 && idx <= len;
 end
-% cluster_name = cl(idx).name;
 cluster_name = names{idx};
 
 end
 
 
-function desc = lProfileName(cluster, release)
+function desc = lProfileDescription(cluster, release)
 
 switch lower(cluster)
     case {'amd', 'intel'}
-        desc = ['IBEX ' cluster ' ' release];
+        desc = ['IBEX ' upper(cluster) ' ' release];
     case {'shaheen'}
-        desc = ['SHAHEEN ' cluster ' ' release];
+        desc = ['SHAHEEN XC40 ' release];
     otherwise
         error('Unsupported cluster %s', cluster)
 end
@@ -178,14 +176,14 @@ end
 end
 
 
-function assembleClusterProfile(jfolder, rjsl, cluster, user, profile, def)
+function assembleClusterProfile(jfolder, rjsl, cluster, user, def)
 
 % Create generic cluster profile
 c = parallel.cluster.Generic;
 
 % Required mutual fields
 % Location of the Integration Scripts
-c.IntegrationScriptsLocation = fullfile(fileparts(mfilename('fullpath')), '+IntegrationScripts', '+common');
+c.IntegrationScriptsLocation = fullfile(fileparts(mfilename('fullpath')), 'IntegrationScriptsRef');
 c.NumWorkers = def.NumWorkers;
 c.OperatingSystem = 'unix';
 
@@ -211,18 +209,20 @@ c.AdditionalProperties.ProcsPerNode = 0;
 c.AdditionalProperties.QueueName = cInfo.defaultQueue;
 c.AdditionalProperties.UseIdentityFile = true;
 c.AdditionalProperties.IdentityFile = '';
+c.AdditionalProperties.IdentityFileHasPassphrase = false;
 c.AdditionalProperties.WallTime = '';
 c.AdditionalProperties.SshPort = 22;
 c.AdditionalProperties.DataParallelism = cInfo.parallelType;
 c.AdditionalProperties.ClusterName = cluster;
 c.AdditionalProperties.JobName = '';
+c.AdditionalProperties.RequiresExclusiveNode = false;
 
 % Save Profile
-c.saveAsProfile(profile);
-c.saveProfile('Description', profile)
+c.saveAsProfile(cluster);
+c.saveProfile('Description', lProfileDescription(cluster, release))
 
 % Set as default profile
-parallel.defaultClusterProfile(profile);
+parallel.defaultClusterProfile(cluster);
 
 end
 
