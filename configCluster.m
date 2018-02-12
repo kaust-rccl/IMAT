@@ -96,13 +96,13 @@ cluster_name = names{idx};
 end
 
 
-function desc = lProfileDescription(cluster, release)
+function desc = lProfileDescription(cluster)
 
 switch lower(cluster)
     case {'amd', 'intel'}
-        desc = ['IBEX ' upper(cluster) ' ' release];
+        desc = ['IBEX ' upper(cluster)];
     case {'shaheen'}
-        desc = ['SHAHEEN XC40 ' release];
+        desc = ['SHAHEEN XC40'];
     otherwise
         error('Unsupported cluster %s', cluster)
 end
@@ -219,7 +219,7 @@ c.AdditionalProperties.RequiresExclusiveNode = false;
 
 % Save Profile
 c.saveAsProfile(cluster);
-c.saveProfile('Description', lProfileDescription(cluster, release))
+c.saveProfile('Description', lProfileDescription(cluster))
 
 % Set as default profile
 parallel.defaultClusterProfile(cluster);
