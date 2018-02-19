@@ -26,7 +26,7 @@ deploy:zip:
   script:
     - 'version_file=$(ls version*)'
     - 'version=${version_file#version}'
-    - git archive --format zip --output "kmat.v$version.zip" master
+    - git archive --format zip --output "kmat.2017.v$version.zip" master
   artifacts:
     name: "kmat.b$CI_JOB_ID"
     paths:
