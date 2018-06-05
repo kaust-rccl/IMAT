@@ -2,5 +2,5 @@
 
 set app_dir /lustre/sw/xc40/matlab/R2017a
 prepend-path PATH $app_dir/bin
-setenv MATLABPATH [file dirname $app_dir]/common/kmat
+setenv MATLABPATH [file dirname $app_dir]/common/kmat2017
 setenv MPICH_ROOT /opt/cray/pe/mpt/default/gni/mpich-isv

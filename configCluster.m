@@ -118,7 +118,12 @@ switch lower(cluster)
     case {'intel'}
         matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
     case {'shaheen'}
-        matRoot = ['/lustre/sw/xc40/matlab/' release];
+        switch release
+            case {'R2017a'}
+                matRoot = ['/lustre/sw/xc40/matlab/' release];
+            otherwise
+                matRoot = ['/sw/xc40cle6/matlab/' release '/linux_binary'];
+        end
     otherwise
         error('Unsupported cluster %s', cluster)
 end
