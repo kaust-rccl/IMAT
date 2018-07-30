@@ -42,4 +42,3 @@ deploy:code:
     - devapps
   script:
     - ./.pull.changes /opt/share/matlab/common
-    - ./.pull.changes /wsintelapps/matlab/common
