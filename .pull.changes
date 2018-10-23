@@ -1,8 +1,8 @@
 #!/bin/bash
 
-_common_dir="${1}"
+_kmat_dir="${1}"
 
-cd "${_common_dir}/kmat2017"
-sudo git pull
-cd "${_common_dir}"
-sudo /usr/local/bin/fixperm rc-apps-a kmat2017
+cd "${_kmat_dir}"
+git pull
+cd $(dirname "${_kmat_dir}")
+/usr/local/bin/fixperm rc-apps-a $(basename "${_kmat_dir}")

@@ -41,5 +41,5 @@ deploy:code:
   tags:
     - devapps
   script:
-    - ./.pull.changes /opt/share/matlab/common
-    - ./.pull.changes /sw/workstations/apps/linux-ubuntu16.04-x86_64/matlab/kmat
+    - sudo ./.pull.changes /opt/share/matlab/common/kmat2017
+    - sudo ./.pull.changes /sw/workstations/apps/linux-ubuntu16.04-x86_64/matlab/kmat_2017a_or_more
