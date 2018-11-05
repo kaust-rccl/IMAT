@@ -220,6 +220,7 @@ c.AdditionalProperties.SshPort = 22;
 c.AdditionalProperties.DataParallelism = cInfo.parallelType;
 c.AdditionalProperties.ClusterName = cluster;
 c.AdditionalProperties.JobName = '';
+c.AdditionalProperties.ProjectName = '';
 c.AdditionalProperties.RequiresExclusiveNode = false;
 
 % Save Profile
