@@ -101,6 +101,8 @@ function desc = lProfileDescription(cluster)
 switch lower(cluster)
     case {'amd', 'intel'}
         desc = ['IBEX ' upper(cluster)];
+    case {'neser'}
+        desc = ['NESER CS500'];
     case {'shaheen'}
         desc = ['SHAHEEN XC40'];
     otherwise
@@ -117,6 +119,8 @@ switch lower(cluster)
         matRoot = ['/sw/csa/matlab/' release '/el7_binary'];
     case {'intel'}
         matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
+    case {'neser'}
+        matRoot = ['/sw/css/matlab/' release '/linux_binary'];
     case {'shaheen'}
         switch release
             case {'R2017a'}
@@ -138,6 +142,8 @@ switch lower(cluster)
         loginnode = 'alogin.ibex.kaust.edu.sa';
     case {'intel'}
         loginnode = 'ilogin.ibex.kaust.edu.sa';
+    case {'neser'}
+        loginnode = 'neser.hpc.kaust.edu.sa';
     case {'shaheen'}
         loginnode = 'shaheen.hpc.kaust.edu.sa';
     otherwise
@@ -172,7 +178,7 @@ function scratch = lGetScratch(cluster, user, release)
 switch lower(cluster)
     case {'amd', 'intel'}
         scratch = ['/scratch/dragon/' cluster '/' user '/Jobs/' release];
-    case {'shaheen'}
+    case {'shaheen', 'neser'}
         scratch = ['/scratch/' user '/Jobs/' release];
     otherwise
         error('Unsupported cluster %s', cluster)
@@ -241,6 +247,9 @@ switch lower(cluster)
     case {'intel'}
         cInfo.parallelType  = 'eth';
         cInfo.defaultQueue = 'batch';
+    case {'neser'}
+        cInfo.parallelType  = 'eth';
+        cInfo.defaultQueue = 'workq';
     case {'shaheen'}
         cInfo.parallelType  = 'ib';
         cInfo.defaultQueue = 'workq';
@@ -257,17 +266,17 @@ end
 function lNotifyUserOfCluster(cluster)
 
 switch lower(cluster)
-    case {'amd', 'intel', 'shaheen'}
+case {'amd', 'intel', 'neser', 'shaheen'}
         fprintf(['\nBefore submitting a job to %s, you must specify the wall time.\n', ...
                  '\n\t\t>> %% E.g. set wall time to 1 hour', ...
                  '\n\t\t>> c = parcluster;', ...
-                 '\n\t\t>> c.AdditionalProperties.WallTime = (''0-1'')', ...
+                 '\n\t\t>> c.AdditionalProperties.WallTime = (''60'')', ...
                  '\n\t\t>> c.saveProfile', ...
                  '\n\t\tAcceptable time formats include:\n \t\t"minutes",', ...
                  ' "minutes:seconds", "hours:minutes:seconds", "days-hours",', ...
                  '"days-hours:minutes" and "days-hours:minutes:seconds"\n\n'], cluster);
 
-        if strcmpi(cluster, 'shaheen')
+        if strcmpi(cluster, 'shaheen') || strcmpi(cluster, 'neser')
             fprintf(['\nOn %s cluster, you must also specify your pojecct.\n', ...
                     '\n\t\t>> %% E.g. set project to k1117\n\t\t', ...
                     '\n\t\t>> c = parcluster;', ...
@@ -275,7 +284,12 @@ switch lower(cluster)
                     '\n\t\t>> c.saveProfile\n'], cluster);
 
             fprintf('\nOn %s cluster, you must also start a secure connection that has been OTP authenticated.\n', cluster);
-            fprintf('\n\t\t>> %% E.g. starting SSH connection on localhost listenening on port 2222\n\t\tssh -L2222:shaheen.hpc.kaust.edu.sa:22 -p 22 -N -f -t -x -o PreferredAuthentications=publickey,keyboard-interactive shaheen.hpc.kaust.edu.sa');
+            if strcmpi(cluster, 'shaheen')
+                fprintf('\n\t\t>> %% E.g. starting SSH connection on localhost listenening on port 2222\n\t\tssh -L2222:shaheen.hpc.kaust.edu.sa:22 -p 22 -N -f -t -x -o PreferredAuthentications=publickey,keyboard-interactive shaheen.hpc.kaust.edu.sa');
+            end
+            if strcmpi(cluster, 'neser')
+                fprintf('\n\t\t>> %% E.g. starting SSH connection on localhost listenening on port 2222\n\t\tssh -L2222:neser.hpc.kaust.edu.sa:22 -p 22 -N -f -t -x -o PreferredAuthentications=publickey,keyboard-interactive neser.hpc.kaust.edu.sa');
+            end
             fprintf(['\n\t\t>> %% Now set port used by MATLAB HPC Add-on:', ...
                     '\n\t\t>> c = parcluster;', ...
                     '\n\t\t>> c.AdditionalProperties.SshPort = (''2222'')', ...

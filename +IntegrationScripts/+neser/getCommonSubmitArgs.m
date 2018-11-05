@@ -4,6 +4,7 @@ function commonSubmitArgs = getCommonSubmitArgs(cluster, numWorkers, jobName)
 
 % Copyright 2018 KAUST
 % Antonio M. Arena (antonio.arena@kaust.edu.sa)
+% Iten Ismail (iten.ismail@kaust.edu.sa)
 % Copyright 2016-2017 The MathWorks, Inc.
 
 commonSubmitArgs = '';
@@ -21,13 +22,11 @@ ppn = validatedPropValue(cluster, 'ProcsPerNode', 'double');
 if ~isempty(ppn) && ppn > 0
     % Don't request more cores/node than workers
     ppn = min(numWorkers, ppn);
-    commonSubmitArgs = sprintf('%s --ntasks-per-node=%d -n %d --cpus-per-task=2', commonSubmitArgs, ppn, numWorkers);
+    commonSubmitArgs = sprintf('%s --ntasks-per-node=%d -n %d --ntasks-per-socket=20 --threads-per-core=1', commonSubmitArgs, ppn, numWorkers);
 else
     % Let SLURM figure out the number of nodes
-    commonSubmitArgs = sprintf('%s -n %d --cpus-per-task=2', commonSubmitArgs, numWorkers);
+    commonSubmitArgs = sprintf('%s -n %d --ntasks-per-socket=20 --threads-per-core=1 --ntasks-per-node=40', commonSubmitArgs, numWorkers);
 end
-
-commonSubmitArgs = sprintf('%s -C amd', commonSubmitArgs);
 
 %% REQUIRED
 % Walltime
@@ -46,6 +45,7 @@ else
     error(errorMsg)
 end
 
+
 %% OPTIONAL
 % Account Name
 an = validatedPropValue(cluster, 'ProjectName', 'char');
@@ -54,7 +54,7 @@ if ~isempty(an)
 end
 
 % Partition
-qn = validatedPropValue(cluster, 'QueueName', 'char', 'batch');
+qn = validatedPropValue(cluster, 'QueueName', 'char', 'workq');
 commonSubmitArgs = [commonSubmitArgs ' --partition=' qn];
 
 % Run on exclusive node
