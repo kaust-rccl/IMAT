@@ -86,7 +86,7 @@ selected = false;
 while ~selected
     for pidx = 1:len
         name = erase(names{pidx}, '+');
-        fprintf('\t[%d] %s\n', pidx, name);
+        fprintf('\t[%d] %s\n', pidx, lProfileDescription(name));
     end
     idx = input(sprintf('Select a cluster [1-%d]: ', len));
     selected = idx >= 1 && idx <= len;
