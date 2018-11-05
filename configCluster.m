@@ -120,7 +120,7 @@ switch lower(cluster)
     case {'shaheen'}
         switch release
             case {'R2017a'}
-                matRoot = ['/lustre/sw/xc40/matlab/' release];
+                matRoot = ['/sw/xc40/matlab/' release];
             otherwise
                 matRoot = ['/sw/xc40cle6/matlab/' release '/linux_binary'];
         end
@@ -135,9 +135,9 @@ function loginnode = lGetLoginNode(cluster)
 
 switch lower(cluster)
     case {'amd'}
-        loginnode = 'alogin.dragon.kaust.edu.sa';
+        loginnode = 'alogin.ibex.kaust.edu.sa';
     case {'intel'}
-        loginnode = 'ilogin.dragon.kaust.edu.sa';
+        loginnode = 'ilogin.ibex.kaust.edu.sa';
     case {'shaheen'}
         loginnode = 'shaheen.hpc.kaust.edu.sa';
     otherwise
