@@ -22,10 +22,10 @@ test:R2018a:
     release: "R2018a"
   <<: *test_job
 
-# test:R2018b:
-#   variables:
-#     release: "R2018b"
-#   <<: *test_job
+test:R2018b:
+  variables:
+    release: "R2018b"
+  <<: *test_job
 
 deploy:zip:
   stage: deploy
