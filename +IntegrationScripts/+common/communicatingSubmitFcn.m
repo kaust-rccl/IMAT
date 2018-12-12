@@ -134,16 +134,26 @@ switch lower(ClusterName)
         scriptLocation = '+common';
     case {'intel'}
         scriptLocation = '+common';
+    case {'neser'}
+        scriptLocation = '+common';
     case {'shaheen'}
         scriptLocation = '+shaheen';
 end
+
 configClusterLocation = fileparts(which('configCluster.m'));
 dirpart = fullfile(configClusterLocation, '+IntegrationScripts', scriptLocation);
 scriptName = ['communicatingJobWrapper.sh-' mpiExt];
-% The wrapper script is in the same directory as this file
-% dirpart = fileparts(mfilename('fullpath'));
+% The wrapper script location depends on cluster we're using
 localScript = fullfile(dirpart, scriptName);
 % Copy the local wrapper script to the job directory
+copyfile(localScript, localJobDirectory);
+
+% This is for ssh & srun (not hydra).
+% The python script name is tasks_per_node.py
+dirpart = fileparts(mfilename('fullpath'));
+scriptName = 'tasks_per_node.py';
+localScript = fullfile(dirpart, scriptName);
+% Copy python script to the job directory
 copyfile(localScript, localJobDirectory);
 
 % The command that will be executed on the remote host to run the job.
