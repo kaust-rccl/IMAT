@@ -128,6 +128,14 @@ localJobDirectory = cluster.getJobFolder(job);
 % How we refer to the job directory on the cluster
 remoteJobDirectory = remoteConnection.getRemoteJobLocation(job.ID, cluster.OperatingSystem);
 
+% This is for ssh & srun (not hydra).
+% The python script name is tasks_per_node.py
+dirpart = fileparts(mfilename('fullpath'));
+scriptName = 'tasks_per_node.py';
+localScript = fullfile(dirpart, scriptName);
+% Copy python script to the job directory
+copyfile(localScript, localJobDirectory);
+
 % The script name is communicatingJobWrapper.sh
 switch lower(ClusterName)
     case {'amd'}
@@ -146,14 +154,6 @@ scriptName = ['communicatingJobWrapper.sh-' mpiExt];
 % The wrapper script location depends on cluster we're using
 localScript = fullfile(dirpart, scriptName);
 % Copy the local wrapper script to the job directory
-copyfile(localScript, localJobDirectory);
-
-% This is for ssh & srun (not hydra).
-% The python script name is tasks_per_node.py
-dirpart = fileparts(mfilename('fullpath'));
-scriptName = 'tasks_per_node.py';
-localScript = fullfile(dirpart, scriptName);
-% Copy python script to the job directory
 copyfile(localScript, localJobDirectory);
 
 % The command that will be executed on the remote host to run the job.
