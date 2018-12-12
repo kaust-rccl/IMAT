@@ -50,7 +50,7 @@ runMpiexec() {
     # MATLAB ships MPICH2 version 1.4.1p1
     # Cray MPICH for ISV is ABI compatible with MATLAB's MPICH API
     _ver="$(basename ${MDCE_CMR})"
-    module use "${MDCE_CMR}/../common/kmat/conf"
+    module use "${MDCE_CMR}/../common/kmat2017/conf"
     module load "${_ver}"
 
     if [ "X${MDCE_DEBUG}X" == "XtrueX" ]; then
