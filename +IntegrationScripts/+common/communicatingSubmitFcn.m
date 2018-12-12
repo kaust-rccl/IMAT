@@ -161,7 +161,7 @@ jobName = sprintf('Job%d', job.ID);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % You might want to customize this section to match your cluster,
 % for example to limit the number of nodes for a single job.
-additionalSubmitArgs = sprintf('--ntasks=%d', environmentProperties.NumberOfTasks);
+additionalSubmitArgs = sprintf('--comment="MATLAB HPC Add-on running %d cores"', environmentProperties.NumberOfTasks);
 getCommonSubmitArgs = str2func(['@IntegrationScripts.' ClusterName '.getCommonSubmitArgs']);
 commonSubmitArgs = getCommonSubmitArgs(cluster, environmentProperties.NumberOfTasks, jobName);
 if ~isempty(commonSubmitArgs) && ischar(commonSubmitArgs)
