@@ -143,9 +143,9 @@ switch lower(cluster)
     case {'intel'}
         loginnode = 'ilogin.ibex.kaust.edu.sa';
     case {'neser'}
-        loginnode = 'neser.hpc.kaust.edu.sa';
+        loginnode = 'localhost';
     case {'shaheen'}
-        loginnode = 'shaheen.hpc.kaust.edu.sa';
+        loginnode = 'localhost';
     otherwise
         error('Unsupported cluster %s', cluster)
 end
