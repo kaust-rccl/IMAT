@@ -177,7 +177,7 @@ function scratch = lGetScratch(cluster, user, release)
 
 switch lower(cluster)
     case {'amd', 'intel'}
-        scratch = ['/scratch/dragon/' cluster '/' user '/Jobs/' release];
+        scratch = ['/ibex/scratch/' user '/Jobs/' release];
     case {'shaheen', 'neser'}
         scratch = ['/scratch/' user '/Jobs/' release];
     otherwise
