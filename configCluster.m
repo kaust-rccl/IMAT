@@ -118,7 +118,7 @@ switch lower(cluster)
     case {'amd'}
         matRoot = ['/sw/csa/matlab/' release '/el7_binary'];
     case {'intel'}
-        matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
+        matRoot = ['/sw/csis/matlab/' release '/el7_binary'];
     case {'neser'}
         matRoot = ['/sw/css/matlab/' release '/linux_binary'];
     case {'shaheen'}
