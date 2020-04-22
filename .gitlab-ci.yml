@@ -1,7 +1,7 @@
 image: kcr.kaust.edu.sa/os/ubuntu:xenial
 
 stages:
-  - test
+  # - test
   - deploy
 
 .test: &test_job
