@@ -48,7 +48,8 @@ deploy:code:
   only:
     - master
   tags:
-    - devapps
+    - apps
+    - production
   script:
-    - sudo ./.pull.changes /opt/share/matlab/common/kmat2017
-    - sudo ./.pull.changes /sw/workstations/apps/linux-ubuntu16.04-x86_64/matlab/kmat_2017a_or_more
+    - sudo ./.pull.changes /wsintelapps/matlab/common/kmat2017
+    - sudo ./.pull.changes /sw/workstations/matlab/kmat_2017a_or_more
