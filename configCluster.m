@@ -118,16 +118,11 @@ switch lower(cluster)
     case {'amd'}
         matRoot = ['/sw/csa/matlab/' release '/el7_binary'];
     case {'intel'}
-        matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
+        matRoot = ['/sw/csis/matlab/' release '/el7_binary'];
     case {'neser'}
         matRoot = ['/sw/css/matlab/' release '/linux_binary'];
     case {'shaheen'}
-        switch release
-            case {'R2017a'}
-                matRoot = ['/sw/xc40/matlab/' release];
-            otherwise
-                matRoot = ['/sw/xc40cle6/matlab/' release '/linux_binary'];
-        end
+        matRoot = ['/sw/xc40cle6/matlab/' release '/linux_binary'];
     otherwise
         error('Unsupported cluster %s', cluster)
 end
@@ -143,9 +138,9 @@ switch lower(cluster)
     case {'intel'}
         loginnode = 'ilogin.ibex.kaust.edu.sa';
     case {'neser'}
-        loginnode = 'neser.hpc.kaust.edu.sa';
+        loginnode = 'localhost';
     case {'shaheen'}
-        loginnode = 'shaheen.hpc.kaust.edu.sa';
+        loginnode = 'localhost';
     otherwise
         error('Unsupported cluster %s', cluster)
 end
@@ -177,7 +172,7 @@ function scratch = lGetScratch(cluster, user, release)
 
 switch lower(cluster)
     case {'amd', 'intel'}
-        scratch = ['/scratch/dragon/' cluster '/' user '/Jobs/' release];
+        scratch = ['/ibex/scratch/' user '/Jobs/' release];
     case {'shaheen', 'neser'}
         scratch = ['/scratch/' user '/Jobs/' release];
     otherwise

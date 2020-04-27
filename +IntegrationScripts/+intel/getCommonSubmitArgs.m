@@ -27,7 +27,7 @@ else
     commonSubmitArgs = sprintf('%s -n %d', commonSubmitArgs, numWorkers);
 end
 
-commonSubmitArgs = sprintf('%s -C intel', commonSubmitArgs);
+commonSubmitArgs = sprintf('%s -C cpu_intel_gold_6148', commonSubmitArgs);
 
 %% REQUIRED
 % Walltime

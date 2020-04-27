@@ -116,7 +116,7 @@ end
 % authentication. Otherwise, use the original connection.
 ClusterName = validatedPropValue(cluster, 'ClusterName', 'char');
 SshPort = validatedPropValue(cluster, 'SshPort', 'double', 22);
-if strcmp(ClusterName, 'shaheen')
+if strcmp(ClusterName, 'shaheen') || strcmp(ClusterName, 'neser')
     import com.mathworks.toolbox.distcomp.remote.spi.plugin.SshParameter;
     parameterMap = parallel.internal.cluster.SshParameterMap();
     parameterMap.put(SshParameter.PORT, java.lang.Integer(SshPort))

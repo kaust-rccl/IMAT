@@ -62,7 +62,7 @@ function testIntel(testCase)
 c = testCase.TestData.Cluster;
 c.AdditionalProperties.ClusterName = 'intel';
 additionalArgs = IntegrationScripts.intel.getCommonSubmitArgs(c, 16, 'testIntel');
-verifyEqual(testCase, additionalArgs, '--job-name=testIntel -n 16 -C intel -t 15 --partition=batch')
+verifyEqual(testCase, additionalArgs, '--job-name=testIntel -n 16 -C cpu_intel_gold_6148 -t 15 --partition=batch')
 end
 
 function testIntelOnMultipleNodes(testCase)
@@ -70,7 +70,7 @@ c = testCase.TestData.Cluster;
 c.AdditionalProperties.ClusterName = 'intel';
 c.AdditionalProperties.ProcsPerNode = 4;
 additionalArgs = IntegrationScripts.intel.getCommonSubmitArgs(c, 16, 'testIntelOnMultipleNodes');
-verifyEqual(testCase, additionalArgs, '--job-name=testIntelOnMultipleNodes --ntasks-per-node=4 -n 16 -C intel -t 15 --partition=batch')
+verifyEqual(testCase, additionalArgs, '--job-name=testIntelOnMultipleNodes --ntasks-per-node=4 -n 16 -C cpu_intel_gold_6148 -t 15 --partition=batch')
 end
 
 function testShaheen(testCase)
