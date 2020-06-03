@@ -66,8 +66,8 @@ assembleClusterProfile(jfolder, rjsl, cluster, user, def);
 % Uncomment this if you want to display a banner for users.
 lNotifyUserOfCluster(upper(cluster))
 
-cmd = sprintf('/sw/spack-kaust/scripts/elasticapps.py --app mat_hpc_add_on --version %s &', release)
-system(cmd)
+cmd = sprintf('/sw/spack-kaust/scripts/elasticapps.py --app mat_hpc_add_on --version %s &', release);
+system(cmd);
 
 end
 
