@@ -43,21 +43,6 @@ catch exception
 end
 end
 
-function testAmd(testCase)
-c = testCase.TestData.Cluster;
-c.AdditionalProperties.ClusterName = 'amd';
-additionalArgs = IntegrationScripts.amd.getCommonSubmitArgs(c, 4, 'testAmd');
-verifyEqual(testCase, additionalArgs, '--job-name=testAmd -n 4 --cpus-per-task=2 -C amd -t 15 --partition=batch')
-end
-
-function testAmdOnMultipleNodes(testCase)
-c = testCase.TestData.Cluster;
-c.AdditionalProperties.ClusterName = 'amd';
-c.AdditionalProperties.ProcsPerNode = 2;
-additionalArgs = IntegrationScripts.amd.getCommonSubmitArgs(c, 4, 'testAmdOnMultipleNodes');
-verifyEqual(testCase, additionalArgs, '--job-name=testAmdOnMultipleNodes --ntasks-per-node=2 -n 4 --cpus-per-task=2 -C amd -t 15 --partition=batch')
-end
-
 function testIntel(testCase)
 c = testCase.TestData.Cluster;
 c.AdditionalProperties.ClusterName = 'intel';
