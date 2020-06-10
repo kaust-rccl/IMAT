@@ -2,6 +2,7 @@ image: kcr.kaust.edu.sa/os/ubuntu:xenial
 
 stages:
   # - test
+  - zip
   - deploy
 
 # .test: &test_job
@@ -27,8 +28,8 @@ stages:
 #     release: "R2018b"
 #   <<: *test_job
 
-deploy:zip:
-  stage: deploy
+Code:
+  stage: zip
   only:
     - master
   tags:
@@ -44,13 +45,17 @@ deploy:zip:
       - "kmat.*.zip"
 
 # Deploy code to RC development box
-deploy:code:
+To Spack and Packages:
   stage: deploy
   only:
     - master
   tags:
     - apps
     - production
+  dependencies:
+    - Code
   script:
     - sudo ./.pull.changes /sw/workstations/matlab/kmat_2017a_or_more
-    - cp "./kmat.*.zip" /sw/packages/kmat
+    - 'version_file=$(ls version*)'
+    - 'version=${version_file#version}'
+    - cp "kmat.2017_or_more.v$version.zip" /sw/packages/kmat
