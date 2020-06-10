@@ -39,6 +39,7 @@ deploy:zip:
     - git archive --format zip --output "kmat.2017_or_more.v$version.zip" HEAD
   artifacts:
     name: "kmat.b$CI_JOB_ID"
+    expire_in: 1 week
     paths:
       - "kmat.*.zip"
 
@@ -51,5 +52,5 @@ deploy:code:
     - apps
     - production
   script:
-    - sudo ./.pull.changes /wsintelapps/matlab/common/kmat2017
     - sudo ./.pull.changes /sw/workstations/matlab/kmat_2017a_or_more
+    - cp "./kmat.*.zip" /sw/packages/kmat
