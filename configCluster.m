@@ -102,7 +102,7 @@ end
 function desc = lProfileDescription(cluster)
 
 switch lower(cluster)
-    case {'amd', 'intel'}
+    case {'intel'}
         desc = ['IBEX ' upper(cluster)];
     case {'neser'}
         desc = ['NESER CS500'];
@@ -113,19 +113,32 @@ switch lower(cluster)
 end
 
 end
+switch lower(cluster)
+    case {'intel'}
+        scratch = ['/ibex/scratch/' user '/Jobs/' release];
+    case {'shaheen', 'neser'}
+        scratch = ['/scratch/' user '/Jobs/' release];
+    otherwise
+        error('Unsupported cluster %s', cluster)
+end
 
 
 function matRoot = lGetMatlabRoot(cluster, release)
 
 switch lower(cluster)
-    case {'amd'}
-        matRoot = ['/sw/csa/matlab/' release '/el7_binary'];
     case {'intel'}
-        matRoot = ['/sw/csis/matlab/' release '/el7_binary'];
+	switch release
+	    case {'R2019a'}
+        	matRoot = ['/sw/csi/matlab/' release '/el7.6_binary'];
+	    case {'R2020a'}
+		matRoot = ['/sw/csi/matlab/' release '/el7.7_binary'];
+	    otherwise
+		matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
+	end
     case {'neser'}
         matRoot = ['/sw/css/matlab/' release '/linux_binary'];
     case {'shaheen'}
-        matRoot = ['/sw/xc40cle6/matlab/' release '/linux_binary'];
+        matRoot = ['/sw/xc40cle7/matlab/' release '/linux_binary'];
     otherwise
         error('Unsupported cluster %s', cluster)
 end
@@ -136,8 +149,6 @@ end
 function loginnode = lGetLoginNode(cluster)
 
 switch lower(cluster)
-    case {'amd'}
-        loginnode = 'alogin.ibex.kaust.edu.sa';
     case {'intel'}
         loginnode = 'ilogin.ibex.kaust.edu.sa';
     case {'neser'}
@@ -174,7 +185,7 @@ end
 function scratch = lGetScratch(cluster, user, release)
 
 switch lower(cluster)
-    case {'amd', 'intel'}
+    case {'intel'}
         scratch = ['/ibex/scratch/' user '/Jobs/' release];
     case {'shaheen', 'neser'}
         scratch = ['/scratch/' user '/Jobs/' release];
@@ -239,9 +250,6 @@ end
 function cInfo = clusterInformation(cluster)
 
 switch lower(cluster)
-    case {'amd'}
-        cInfo.parallelType = 'eth';
-        cInfo.defaultQueue = 'batch';
     case {'intel'}
         cInfo.parallelType  = 'eth';
         cInfo.defaultQueue = 'batch';
@@ -264,7 +272,7 @@ end
 function lNotifyUserOfCluster(cluster)
 
 switch lower(cluster)
-case {'amd', 'intel', 'neser', 'shaheen'}
+case {'intel', 'neser', 'shaheen'}
         fprintf(['\nBefore submitting a job to %s, you must specify the wall time.\n', ...
                  '\n\t\t>> %% E.g. set wall time to 1 hour', ...
                  '\n\t\t>> c = parcluster;', ...
