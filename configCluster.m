@@ -113,14 +113,6 @@ switch lower(cluster)
 end
 
 end
-switch lower(cluster)
-    case {'intel'}
-        scratch = ['/ibex/scratch/' user '/Jobs/' release];
-    case {'shaheen', 'neser'}
-        scratch = ['/scratch/' user '/Jobs/' release];
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
 
 
 function matRoot = lGetMatlabRoot(cluster, release)
