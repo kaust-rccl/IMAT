@@ -52,6 +52,7 @@ To Spack and Packages:
   tags:
     - apps
     - production
+    - ubuntu18.04
   dependencies:
     - Code
   script:
