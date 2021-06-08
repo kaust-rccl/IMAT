@@ -35,7 +35,7 @@ Code:
   tags:
     - docker
   before_script:
-    - apt update && apt install git
+    - apt update && apt install -y git
   script:
     - 'version_file=$(ls version*)'
     - 'version=${version_file#version}'
