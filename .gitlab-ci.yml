@@ -1,4 +1,4 @@
-image: kcr.kaust.edu.sa/os/ubuntu:xenial
+image: ubuntu:xenial
 
 stages:
   # - test
