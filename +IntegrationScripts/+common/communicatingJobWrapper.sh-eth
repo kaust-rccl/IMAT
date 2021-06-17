@@ -123,8 +123,8 @@ echo -e "\ncleanupAndExit()"
 
     echo "Stopping SMPD on ${SMPD_LAUNCHED_HOSTS} ..."
 
-    echo "srun --ntasks-per-node=1 --ntasks=${SLURM_JOB_NUM_NODES} ${FULL_SMPD} -shutdown -phrase MATLAB -port ${SMPD_PORT}"
-    srun --ntasks-per-node=1 --ntasks=${SLURM_JOB_NUM_NODES} ${FULL_SMPD} -shutdown -phrase MATLAB -port ${SMPD_PORT}
+    echo "srun --exact --ntasks-per-node=1 --ntasks=${SLURM_JOB_NUM_NODES} ${FULL_SMPD} -shutdown -phrase MATLAB -port ${SMPD_PORT}"
+    srun --exact --ntasks-per-node=1 --ntasks=${SLURM_JOB_NUM_NODES} ${FULL_SMPD} -shutdown -phrase MATLAB -port ${SMPD_PORT}
 
     echo "Exiting with code: ${MPIEXEC_CODE}"
     exit ${MPIEXEC_CODE}
@@ -142,8 +142,8 @@ echo -e "\nlaunchSmpds()"
     # immediately, bringing the MPD down.  Set the debug level
     # to 0, because we really don't want any debugging.
 
-    echo "srun --ntasks-per-node=1 --ntasks=$SLURM_JOB_NUM_NODES --cpu_bind=none ${FULL_SMPD} -phrase MATLAB -port ${SMPD_PORT} -debug 0&"
-    srun --ntasks-per-node=1 --ntasks=$SLURM_JOB_NUM_NODES --cpu_bind=none ${FULL_SMPD} -phrase MATLAB -port ${SMPD_PORT} -debug 0&
+    echo "srun --exact --ntasks-per-node=1 --ntasks=$SLURM_JOB_NUM_NODES --cpu_bind=none ${FULL_SMPD} -phrase MATLAB -port ${SMPD_PORT} -debug 0&"
+    srun --exact --ntasks-per-node=1 --ntasks=$SLURM_JOB_NUM_NODES --cpu_bind=none ${FULL_SMPD} -phrase MATLAB -port ${SMPD_PORT} -debug 0&
     sleep $SLURM_JOB_NUM_NODES
 
     echo "Show Ports Running Process Daemon"
