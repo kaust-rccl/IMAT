@@ -230,6 +230,12 @@ c.AdditionalProperties.JobName = '';
 c.AdditionalProperties.ProjectName = '';
 c.AdditionalProperties.RequiresExclusiveNode = false;
 
+if verLessThan('matlab', '9.6')
+    c.AdditionalProperties.useSmpd = 'true';
+else
+    c.AdditionalProperties.useSmpd = 'false';
+
+
 % Save Profile
 c.saveAsProfile(cluster);
 c.saveProfile('Description', lProfileDescription(cluster))
