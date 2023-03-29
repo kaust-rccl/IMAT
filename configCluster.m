@@ -11,25 +11,7 @@ release = ['R' version('-release')];
 % Import cluster definitions
 def.NumWorkers = 600;
 
-% Cluster list
-cluster_dir = fullfile(fileparts(mfilename('fullpath')), '+IntegrationScripts');
-
-% Listing of setting file(s).  Derive the specific one to use.
-cluster_list = dir(cluster_dir);
-
-% Ignore . and .. directories
-cluster_list = cluster_list(arrayfun(@(x) x.name(1), cluster_list) ~= '.');
-len = length(cluster_list);
-if len == 0
-    error('Failed to find profiles. Contact your System Administrator.')
-elseif len == 1
-    cluster = cluster_list.name;
-else
-    cluster = lExtractPfile(cluster_list);
-end
-
-% Determine the name of the cluster profile
-cluster = erase(cluster, '+');
+cluster = 'ibex';
 
 % Delete the old profile (if it exists)
 profiles = parallel.clusterProfiles();
@@ -40,8 +22,8 @@ warning off
 ps.Profiles(idx).delete
 warning(ws)
 
-def.ClusterMatlabRoot = lGetMatlabRoot(cluster, release);
-def.ClusterHost = lGetLoginNode(cluster);
+def.ClusterMatlabRoot = lGetMatlabRoot(release);
+def.ClusterHost = 'ilogin.ibex.kaust.edu.sa';
 
 % Create the user's local Job Storage Location folder
 rootd = lGetLocalRoot();
@@ -60,7 +42,8 @@ end
 
 % Configure the user's remote storage location and assemble the cluster profile
 user = lower(char(java.lang.System.getProperty('user.name')));
-rjsl = lGetScratch(cluster, user, release);
+%rjsl = lGetScratch(cluster, user, release);
+rjsl = ['/ibex/scratch/' user '/Jobs/' release];
 assembleClusterProfile(jfolder, rjsl, cluster, user, def);
 
 % Uncomment this if you want to display a banner for users.
@@ -72,84 +55,20 @@ lNotifyUserOfCluster(upper(cluster))
 end
 
 
-function cluster_name = lExtractPfile(cl)
-% Display profile listing to user to select from
-len = length(cl);
-for pidx = 1:len
-    name = cl(pidx).name;
-    names{pidx, 1} = name; %#ok<AGROW>
-end
+function matRoot = lGetMatlabRoot(release)
 
-% Delete common from the list of clusters
-names = erase(names, '+common');
-names = names(~cellfun('isempty', names));
-len = length(names);
-
-selected = false;
-while ~selected
-    for pidx = 1:len
-        name = erase(names{pidx}, '+');
-        fprintf('\t[%d] %s\n', pidx, lProfileDescription(name));
-    end
-    idx = input(sprintf('Select a cluster [1-%d]: ', len));
-    selected = idx >= 1 && idx <= len;
-end
-cluster_name = names{idx};
-
-end
-
-
-function desc = lProfileDescription(cluster)
-
-switch lower(cluster)
-    case {'intel'}
-        desc = ['IBEX ' upper(cluster)];
-    case {'neser'}
-        desc = ['NESER CS500'];
-    case {'shaheen'}
-        desc = ['SHAHEEN XC40'];
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
-
-end
-
-
-function matRoot = lGetMatlabRoot(cluster, release)
-
-switch lower(cluster)
-    case {'intel'}
-	switch release
-	    case {'R2019a'}
+    switch release
+    	case {'R2019a'}
         	matRoot = ['/sw/csi/matlab/' release '/el7.6_binary'];
-	    case {'R2020a'}
+    	case {'R2020a'}
 		matRoot = ['/sw/csi/matlab/' release '/el7.7_binary'];
-	    otherwise
-		matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
-	end
-    case {'neser'}
-        matRoot = ['/sw/css/matlab/' release '/linux_binary'];
-    case {'shaheen'}
-        matRoot = ['/sw/xc40cle7/matlab/' release '/linux_binary/matlabR2019b'];
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
-
-end
-
-
-function loginnode = lGetLoginNode(cluster)
-
-switch lower(cluster)
-    case {'intel'}
-        loginnode = 'ilogin.ibex.kaust.edu.sa';
-    case {'neser'}
-        loginnode = 'localhost';
-    case {'shaheen'}
-        loginnode = 'localhost';
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
+    	case {'R2021a'}
+		matRoot = ['/sw/csi/matlab/' release '/el7.9_binary'];
+    	case {'R2022a'}
+		matRoot = ['/sw/csi/matlab/' release '/el7.9_binary'];
+    	otherwise
+    		matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
+    end
 
 end
 
@@ -174,20 +93,6 @@ end
 end
 
 
-function scratch = lGetScratch(cluster, user, release)
-
-switch lower(cluster)
-    case {'intel'}
-        scratch = ['/ibex/scratch/' user '/Jobs/' release];
-    case {'shaheen', 'neser'}
-        scratch = ['/scratch/' user '/Jobs/' release];
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
-
-end
-
-
 function assembleClusterProfile(jfolder, rjsl, cluster, user, def)
 
 % Create generic cluster profile
@@ -207,9 +112,6 @@ c.AdditionalProperties.RemoteJobStorageLocation = rjsl;
 c.HasSharedFilesystem = false;
 c.JobStorageLocation = jfolder;
 
-% Get cluster respective information
-cInfo = clusterInformation(cluster);
-
 % AdditionalProperties for the cluster:
 % username, queue, walltime, e-mail, etc.
 c.AdditionalProperties.AdditionalSubmitArgs = '';
@@ -218,89 +120,47 @@ c.AdditionalProperties.DebugMessagesTurnedOn = false;
 c.AdditionalProperties.StraceOn = false;
 c.AdditionalProperties.EmailAddress = '';
 c.AdditionalProperties.ProcsPerNode = 0;
-c.AdditionalProperties.QueueName = cInfo.defaultQueue;
+c.AdditionalProperties.QueueName = 'batch';
 c.AdditionalProperties.UseIdentityFile = true;
 c.AdditionalProperties.IdentityFile = '';
 c.AdditionalProperties.IdentityFileHasPassphrase = false;
 c.AdditionalProperties.WallTime = '';
 c.AdditionalProperties.SshPort = 22;
-c.AdditionalProperties.DataParallelism = cInfo.parallelType;
+% DataParallelism is unused. However, removing it entirely breaks the code, so it's staying for now. -OM March 2023
+c.AdditionalProperties.DataParallelism = 'ib';
 c.AdditionalProperties.ClusterName = cluster;
 c.AdditionalProperties.JobName = '';
 c.AdditionalProperties.ProjectName = '';
 c.AdditionalProperties.RequiresExclusiveNode = false;
 
+% Added this property to accomodate the changes from the new mathworks repo for the slurm plugin for matlab. -OM March 2023
 if verLessThan('matlab', '9.6')
-    c.AdditionalProperties.useSmpd = true;
+    c.AdditionalProperties.useSmpd = 1;
 else
-    c.AdditionalProperties.useSmpd = false;
+    c.AdditionalProperties.useSmpd = 0;
+end
 
 
 % Save Profile
 c.saveAsProfile(cluster);
-c.saveProfile('Description', lProfileDescription(cluster))
+c.saveProfile('Description', 'Ibex')
 
 % Set as default profile
 parallel.defaultClusterProfile(cluster);
 
 end
 
-function cInfo = clusterInformation(cluster)
-
-switch lower(cluster)
-    case {'intel'}
-        cInfo.parallelType  = 'eth';
-        cInfo.defaultQueue = 'batch';
-    case {'neser'}
-        cInfo.parallelType  = 'eth';
-        cInfo.defaultQueue = 'workq';
-    case {'shaheen'}
-        cInfo.parallelType  = 'ib';
-        cInfo.defaultQueue = 'workq';
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
-
-end
-
-
 % Modify the below banner to display a message for users regarding
 % the cluster requirements (based on getAdditionalSubmitArguement).
 % If you wish to display this banner, uncomment the above
 function lNotifyUserOfCluster(cluster)
-
-switch lower(cluster)
-case {'intel', 'neser', 'shaheen'}
-        fprintf(['\nBefore submitting a job to %s, you must specify the wall time.\n', ...
-                 '\n\t\t>> %% E.g. set wall time to 1 hour', ...
-                 '\n\t\t>> c = parcluster;', ...
-                 '\n\t\t>> c.AdditionalProperties.WallTime = (''60'')', ...
-                 '\n\t\t>> c.saveProfile', ...
-                 '\n\t\tAcceptable time formats include:\n \t\t"minutes",', ...
-                 ' "minutes:seconds", "hours:minutes:seconds", "days-hours",', ...
-                 '"days-hours:minutes" and "days-hours:minutes:seconds"\n\n'], cluster);
-
-        if strcmpi(cluster, 'shaheen') || strcmpi(cluster, 'neser')
-            fprintf(['\nOn %s cluster, you must also specify your pojecct.\n', ...
-                    '\n\t\t>> %% E.g. set project to k1117\n\t\t', ...
-                    '\n\t\t>> c = parcluster;', ...
-                    '\n\t\t>> c.AdditionalProperties.ProjectName = (''k1117'')', ...
-                    '\n\t\t>> c.saveProfile\n'], cluster);
-
-            fprintf('\nOn %s cluster, you must also start a secure connection that has been OTP authenticated.\n', cluster);
-            if strcmpi(cluster, 'shaheen')
-                fprintf('\n\t\t>> %% E.g. starting SSH connection on localhost listenening on port 2222\n\t\tssh -L2222:shaheen.hpc.kaust.edu.sa:22 -p 22 -N -f -t -x -o PreferredAuthentications=publickey,keyboard-interactive shaheen.hpc.kaust.edu.sa');
-            end
-            if strcmpi(cluster, 'neser')
-                fprintf('\n\t\t>> %% E.g. starting SSH connection on localhost listenening on port 2222\n\t\tssh -L2222:neser.hpc.kaust.edu.sa:22 -p 22 -N -f -t -x -o PreferredAuthentications=publickey,keyboard-interactive neser.hpc.kaust.edu.sa');
-            end
-            fprintf(['\n\t\t>> %% Now set port used by MATLAB HPC Add-on:', ...
-                    '\n\t\t>> c = parcluster;', ...
-                    '\n\t\t>> c.AdditionalProperties.SshPort = (''2222'')', ...
-                    '\n\t\t>> c.saveProfile\n']);
-        end
-    otherwise
-        error('Unsupported cluster %s', cluster)
-end
+    fprintf(['\nBefore submitting a job to %s, you must specify the wall time.\n', ...
+             '\n\t\t>> %% E.g. set wall time to 1 hour', ...
+             '\n\t\t>> c = parcluster;', ...
+             '\n\t\t>> c.AdditionalProperties.WallTime = (''60'')', ...
+             '\n\t\t>> c.saveProfile', ...
+             '\n\t\tAcceptable time formats include:\n \t\t"minutes",', ...
+             ' "minutes:seconds", "hours:minutes:seconds", "days-hours",', ...
+             '"days-hours:minutes" and "days-hours:minutes:seconds"\n\n'], cluster);
 
 end

@@ -35,7 +35,7 @@ echo -e "The scheduler has allocated the following nodes to this job:\n${SLURM_N
 
 # Create full path to mw_mpiexec if needed.
 FULL_MPIEXEC=${PARALLEL_SERVER_CMR:+${PARALLEL_SERVER_CMR}/bin/}mw_mpiexec
-
+#FULL_MPIEXEC=srun
 # Label stdout/stderr with the rank of the process
 MPI_VERBOSE=-l
 
@@ -46,6 +46,8 @@ fi
 
 # Unset the hostname variables to ensure they don't get forwarded by mpiexec
 unset HOST HOSTNAME
+
+cd /ibex/scratch/$USER
 
 # Construct the command to run.
 CMD="\"${FULL_MPIEXEC}\" -bind-to core:${PARALLEL_SERVER_NUM_THREADS} ${MPI_VERBOSE} -n ${PARALLEL_SERVER_TOTAL_TASKS} \

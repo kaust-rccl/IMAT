@@ -89,23 +89,6 @@ mpiExt = validatedPropValue(cluster, 'DataParallelism', 'char');
 
 ClusterName = validatedPropValue(cluster, 'ClusterName', 'char');
 
-% variables = {'MDCE_DECODE_FUNCTION', decodeFunction; ...
-%              'MDCE_STORAGE_CONSTRUCTOR', environmentProperties.StorageConstructor; ...
-%              'MDCE_JOB_LOCATION', environmentProperties.JobLocation; ...
-%              'MDCE_MATLAB_EXE', environmentProperties.MatlabExecutable; ...
-%              'MDCE_MATLAB_ARGS', matlabArguments; ...
-%              'MDCE_DEBUG', mdceDebug; ...
-%              'MDCE_STRACE', mdceStrace; ...
-%              'MDCE_CLUSTER', lower(ClusterName); ...
-%              'MDCE_MPI_EXT', mpiExt; ...
-%              'MLM_WEB_LICENSE', environmentProperties.UseMathworksHostedLicensing; ...
-%              'MLM_WEB_USER_CRED', environmentProperties.UserToken; ...
-%              'MLM_WEB_ID', environmentProperties.LicenseWebID; ...
-%              'MDCE_LICENSE_NUMBER', environmentProperties.LicenseNumber; ...
-%              'MDCE_STORAGE_LOCATION', remoteConnection.JobStorageLocation; ...
-%              'MDCE_CMR', cluster.ClusterMatlabRoot; ...
-%              'MDCE_TOTAL_TASKS', num2str(environmentProperties.NumberOfTasks)};
-
 variables = {'PARALLEL_SERVER_DECODE_FUNCTION', decodeFunction; ...
     'PARALLEL_SERVER_STORAGE_CONSTRUCTOR', environmentProperties.StorageConstructor; ...
     'PARALLEL_SERVER_JOB_LOCATION', environmentProperties.JobLocation; ...
@@ -155,17 +138,7 @@ localScript = fullfile(dirpart, scriptName);
 % Copy python script to the job directory
 copyfile(localScript, localJobDirectory);
 
-% The script name is communicatingJobWrapper.sh
-switch lower(ClusterName)
-    case {'amd'}
-        scriptLocation = '+common';
-    case {'intel'}
-        scriptLocation = '+common';
-    case {'neser'}
-        scriptLocation = '+common';
-    case {'shaheen'}
-        scriptLocation = '+shaheen';
-end
+scriptLocation = '+common';
 
 configClusterLocation = fileparts(which('configCluster.m'));
 % dirpart = fullfile(configClusterLocation, '+IntegrationScripts', scriptLocation);
@@ -178,7 +151,7 @@ configClusterLocation = fileparts(which('configCluster.m'));
 % copyfile(localScript, localJobDirectory);
 
 if verLessThan('matlab', '9.6') || ...
-    validatedPropValue(cluster, 'UseSmpd', 'logical', false)
+    validatedPropValue(cluster, 'UseSmpd', 'bool', false)
 jobWrapperName = 'communicatingJobWrapperSmpd.sh';
 else
 jobWrapperName = 'communicatingJobWrapper.sh';
@@ -189,25 +162,12 @@ localScript = fullfile(dirpart, jobWrapperName);
 % Copy the local wrapper script to the job directory
 copyfile(localScript, localJobDirectory);
 
-
-
-% % The command that will be executed on the remote host to run the job.
-% remoteScriptName = sprintf('%s%s%s', remoteJobDirectory, fileSeparator, scriptName);
-% quotedScriptName = sprintf('%s%s%s', quote, remoteScriptName, quote);
-
-% % Choose a file for the output. Please note that currently, JobStorageLocation refers
-% % to a directory on disk, but this may change in the future.
-% logFile = sprintf('%s%s%s', remoteJobDirectory, fileSeparator, sprintf('Job%d.log', job.ID));
-% quotedLogFile = sprintf('%s%s%s', quote, logFile, quote);
-
-% jobName = sprintf('Job%d', job.ID);
-
 % The script to execute on the cluster to run the job
-wrapperPath = sprintf('%s%s%s', jobDirectoryOnCluster, fileSeparator, jobWrapperName);
+wrapperPath = sprintf('%s%s%s', remoteJobDirectory, fileSeparator, jobWrapperName);
 quotedWrapperPath = sprintf('%s%s%s', quote, wrapperPath, quote);
 
 % Choose a file for the output
-logFile = sprintf('%s%s%s', jobDirectoryOnCluster, fileSeparator, sprintf('Job%d.log', job.ID));
+logFile = sprintf('%s%s%s', remoteJobDirectory, fileSeparator, sprintf('Job%d.log', job.ID));
 quotedLogFile = sprintf('%s%s%s', quote, logFile, quote);
 dctSchedulerMessage(5, '%s: Using %s as log file', currFilename, quotedLogFile);
 
@@ -230,7 +190,7 @@ dctSchedulerMessage(5, '%s: Generating script for job.', currFilename);
 localScriptName = tempname(localJobDirectory);
 [~, scriptName] = fileparts(localScriptName);
 remoteScriptLocation = sprintf('%s%s%s', remoteJobDirectory, fileSeparator, scriptName);
-createSubmitScript(localScriptName, jobName, quotedLogFile, quotedScriptName, variables, additionalSubmitArgs);
+createSubmitScript(localScriptName, jobName, quotedLogFile, quotedWrapperPath, variables, additionalSubmitArgs);
 % Create the command to run on the remote host.
 commandToRun = sprintf('/bin/bash %s', remoteScriptLocation);
 dctSchedulerMessage(4, '%s: Starting mirror for job %d.', currFilename, job.ID);

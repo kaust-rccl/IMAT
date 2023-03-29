@@ -34,41 +34,27 @@ end
 
 function testNoWalltime(testCase)
 c = testCase.TestData.Cluster;
-c.AdditionalProperties.ClusterName = 'amd';
+c.AdditionalProperties.ClusterName = 'ibex';
 c.AdditionalProperties.WallTime = '';
 try 
-   IntegrationScripts.amd.getCommonSubmitArgs(c, 128, 'itDoesNotMatter');
+   IntegrationScripts.ibex.getCommonSubmitArgs(c, 128, 'itDoesNotMatter');
 catch exception
     assertSubstring(testCase, exception.message, 'Must provide a wall time.')
 end
 end
 
-function testIntel(testCase)
+function testIbex(testCase)
 c = testCase.TestData.Cluster;
-c.AdditionalProperties.ClusterName = 'intel';
-additionalArgs = IntegrationScripts.intel.getCommonSubmitArgs(c, 16, 'testIntel');
-verifyEqual(testCase, additionalArgs, '--job-name=testIntel -n 16 -C cpu_intel_gold_6148 -t 15 --partition=batch')
+c.AdditionalProperties.ClusterName = 'ibex';
+additionalArgs = IntegrationScripts.ibex.getCommonSubmitArgs(c, 16, 'testIbex');
+verifyEqual(testCase, additionalArgs, '--job-name=testIbex -n 16 -t 15 --partition=batch')
 end
 
-function testIntelOnMultipleNodes(testCase)
+function testIbexOnMultipleNodes(testCase)
 c = testCase.TestData.Cluster;
-c.AdditionalProperties.ClusterName = 'intel';
+c.AdditionalProperties.ClusterName = 'Ibex';
 c.AdditionalProperties.ProcsPerNode = 4;
-additionalArgs = IntegrationScripts.intel.getCommonSubmitArgs(c, 16, 'testIntelOnMultipleNodes');
-verifyEqual(testCase, additionalArgs, '--job-name=testIntelOnMultipleNodes --ntasks-per-node=4 -n 16 -C cpu_intel_gold_6148 -t 15 --partition=batch')
+additionalArgs = IntegrationScripts.ibex.getCommonSubmitArgs(c, 16, 'testIbexOnMultipleNodes');
+verifyEqual(testCase, additionalArgs, '--job-name=testIbexOnMultipleNodes --ntasks-per-node=4 -n 16 -t 15 --partition=batch')
 end
 
-function testShaheen(testCase)
-c = testCase.TestData.Cluster;
-c.AdditionalProperties.ClusterName = 'shaheen';
-additionalArgs = IntegrationScripts.shaheen.getCommonSubmitArgs(c, 12, 'testShaheen');
-verifyEqual(testCase, additionalArgs, '--job-name=testShaheen -n 12 --ntasks-per-socket=16 -t 15 --partition=workq')
-end
-
-function testShaheenOnMultipleNodes(testCase)
-c = testCase.TestData.Cluster;
-c.AdditionalProperties.ClusterName = 'shaheen';
-c.AdditionalProperties.ProcsPerNode = 12;
-additionalArgs = IntegrationScripts.shaheen.getCommonSubmitArgs(c, 24, 'testShaheenOnMultipleNodes');
-verifyEqual(testCase, additionalArgs, '--job-name=testShaheenOnMultipleNodes --ntasks-per-node=12 -n 24 --ntasks-per-socket=16 -t 15 --partition=workq')
-end
