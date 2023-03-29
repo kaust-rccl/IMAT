@@ -127,7 +127,7 @@ c.AdditionalProperties.IdentityFileHasPassphrase = false;
 c.AdditionalProperties.WallTime = '';
 c.AdditionalProperties.SshPort = 22;
 % DataParallelism is unused. However, removing it entirely breaks the code, so it's staying for now. -OM March 2023
-c.AdditionalProperties.DataParallelism = 'ib';
+c.AdditionalProperties.DataParallelism = 'eth';
 c.AdditionalProperties.ClusterName = cluster;
 c.AdditionalProperties.JobName = '';
 c.AdditionalProperties.ProjectName = '';
