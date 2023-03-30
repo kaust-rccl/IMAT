@@ -15,11 +15,11 @@ be prompted for your password every time you submit a job.
 2. Load the MATLAB module
   `module load matlab/R2021a`
 3. export the correct timezone `export TZ="Asia/Riyadh"`
-4. Clone `ibex-mat` and export MATLABPATH
+4. Clone `IMAT` and export MATLABPATH
 ```
 cd
-git clone https://github.com/kaust-rccl/ibex-mat.git
-export MATLABPATH=$HOME/ibex-mat
+git clone https://github.com/kaust-rccl/IMAT.git
+export MATLABPATH=$HOME/IMAT
 ```
 5. Run the MATLAB GUI `matlab &`
 
