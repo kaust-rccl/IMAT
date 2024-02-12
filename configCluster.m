@@ -58,16 +58,16 @@ end
 function matRoot = lGetMatlabRoot(release)
 
     switch release
-    	case {'R2019a'}
-        	matRoot = ['/sw/csi/matlab/' release '/el7.6_binary'];
-    	case {'R2020a'}
-		matRoot = ['/sw/csi/matlab/' release '/el7.7_binary'];
-    	case {'R2021a'}
-		matRoot = ['/sw/csi/matlab/' release '/el7.9_binary'];
     	case {'R2022a'}
-		matRoot = ['/sw/csi/matlab/' release '/el7.9_binary'];
+        	matRoot = ['/sw/rl9c/matlab/' release '/rl9_binary'];
+    	case {'R2022b'}
+		matRoot = ['/sw/rl9c/matlab/' release '/rl9_binary'];
+    	case {'R2023a'}
+		matRoot = ['/sw/rl9c/matlab/' release '/rl9_binary'];
+    	case {'R2023b'}
+		matRoot = ['/sw/rl9c/matlab/' release '/rl9_binary'];
     	otherwise
-    		matRoot = ['/sw/csi/matlab/' release '/el7_binary'];
+    		matRoot = ['/sw/rl9c/matlab/' release '/rl9_binary'];
     end
 
 end

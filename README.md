@@ -13,7 +13,7 @@ This version only is only tested with MATLAB versions starting R2019a.
 1. Setup passwordless authentication from local machines to IBEX. Otherwise, you will 
 be prompted for your password every time you submit a job.
 2. Load the MATLAB module
-  `module load matlab/R2021a`
+  `module load matlab/R2023b`
 3. export the correct timezone `export TZ="Asia/Riyadh"`
 4. Clone `IMAT` and export MATLABPATH
 ```
