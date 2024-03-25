@@ -35,7 +35,7 @@ ssh-copy-id <username>@ilogin.ibex.kaust.edu.sa
 mkdir ~/scratch
 sshfs <username>@ilogin.ibex.kaust.edu.sa:/ibex/scratch/<username> ~/scratch -o direct_io
 ```
-### Note: The directory `/ibex/scratch/<username>` will be mounted temporarily to `~/scratch` on remote workstation. so, once you've finished your workload, please don't close the session but just logout..
+### Important note: The directory `/ibex/scratch/<username>` will be mounted temporarily to `~/scratch` on remote workstation. so, once you've finished your workload, please don't close the session but just logout..
 
 5. Load the MATLAB module
   `module load matlab/R2023b`
@@ -53,10 +53,10 @@ matlab &
 ### Steps to be done on the MATLAB GUI
 On the matlab window, modify and execute the following examples to submit your job.
 
-###Examples:
+### Examples:
 The examples below show how to use Matlab HPC Add-on to run serial (single CPU) jobs, multi-processor jobs on a single machine, and distributed parallel jobs running on multiple nodes.
 
-###Example 1: Running a Simple Serial Job:
+### Example 1: Running a Simple Serial Job:
 Create a Matlab script called `mywave.m` simply calculates a million points on a sine wave in a for loop.
 
 ```
@@ -91,7 +91,7 @@ load(Job,'A');
 plot(A);
 ```
 
-###Example 2: Parallel Job on a Single Node:
+### Example 2: Parallel Job on a Single Node:
 The next example is to run a parallel job using 8 processors on a single node.  It is a parallelized version of mywave.m called `parallel_mywave.m` that uses the parfor statement to parallelize the previous for loop:
 
 ```
@@ -127,7 +127,7 @@ load(Job,'A');
 plot(A);
 ```
 
-###Example 3: Distributed Parallel Job on Multiple Nodes:
+### Example 3: Distributed Parallel Job on Multiple Nodes:
 The next example is to run a parallel job to calculate eigen values of random numbers using 48 processors on a multiple nodes.  It is a parallelized Matlab script called `parallel_eigen.m` that uses the parfor statement to parallelize the for loop:
 
 ```
