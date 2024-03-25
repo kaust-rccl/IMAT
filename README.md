@@ -35,8 +35,8 @@ ssh-copy-id <username>@ilogin.ibex.kaust.edu.sa
 mkdir ~/scratch
 sshfs <username>@ilogin.ibex.kaust.edu.sa:/ibex/scratch/<username> ~/scratch -o direct_io
 ```
-> Important note: The directory `/ibex/scratch/<username>` will be mounted temporarily to `~/scratch` on remote workstation. 
-> so, once you've finished your workload, please don't close the session but just logout..
+> ### Important note: The directory `/ibex/scratch/<username>` will be mounted temporarily to `~/scratch` on remote workstation. 
+> ### so, once you've finished your workload, please don't close the session but just logout..
 
 5. Load the MATLAB module
   `module load matlab/R2023b`
