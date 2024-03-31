@@ -241,10 +241,11 @@ cluster.setJobClusterData(job, jobData);
 %copy output file to ibex
 wait(job)
 release = ['R' version('-release')];
+user = lower(char(java.lang.System.getProperty('user.name')));
 s1 = ['~/Documents/MATLAB/Jobs/ibex/' release '/'];
 s2 = 'Job';
 s3 = num2str(job.ID);
 s4 = '.jobout.mat';
 output = strcat(s1,s2,s3,s4);
-ljsl = ['~/scratch/Jobs/' release '/'];
+ljsl = ['/ibex/scratch/' user '/Jobs/' release '/'];
 copyfile(output, ljsl);
