@@ -1,56 +1,54 @@
 # KAUST HPC ADD-ON FOR MATLAB
 
-`KAUST HPC Add-on for MATLAB` allows users to submit their job scripts to executed at Ibex cluster 
-from remote workstation. Further, the output/results are directly written to Ibex cluster. 
-This allows them likely to get a shorter execution time for their calculations and the MATLAB jobs 
-are submitted via Slurm scheduler.
+`KAUST HPC Add-on for MATLAB` allows users to submit their job scripts to executed at Ibex cluster. 
+Further, the output/results are directly written to Ibex cluster. This allows them likely to get 
+a shorter execution time for their calculations and the MATLAB jobs are submitted via Slurm scheduler.
 
 
 ## Usage
 
-### How to access the remote workstation
-1. Use your KAUST credentials to access remote workstation via the following link:
-https://myws.kaust.edu.sa/engineframe/vdi/vdi.xml?_uri=//com.engineframe.interactive/list.sessions
-2. Select `Ubuntu22.04` as a host.
-
-### Steps to be done on the remote workstation:
-1. Setup passwordless authentication from remote workstation to IBEX. Otherwise, you will 
-be prompted for your password every time you login to Ibex.
-```
-ssh-keygen -t rsa
-ssh-copy-id $USER@ilogin.ibex.kaust.edu.sa
-```
-2. Login to Ibex, ensure that you enable X forwarding (add the -XY flags to the SSH command).
+### Steps to be done on Ibex:
+1. Login to Ibex, ensure that you enable X forwarding (add the `-XY` flags to the SSH command).
 ```
 ssh -XY $USER@ilogin.ibex.kaust.edu.sa
 ```
 
-3. Load the MATLAB module
+2. Setup passwordless authentication from remote workstation to IBEX. Otherwise, you will 
+be prompted for your password every time you login to Ibex.
+```
+ssh-keygen -t rsa
+ssh-copy-id -f $USER@ilogin.ibex.kaust.edu.sa
+```
+
+3. Run `setup.sh` script.  The `setup.sh` script will ask for the working directory, clone the repo, update the IMAT required files, and allocate 1 core with 10GB memory for MATLAB launch.
+```
+#!/bin/bash
+echo -e "Please enter your absolute working directory for MATLAB: \n"
+read workdir ;
+cd $workdir ;
+echo " ... wait for cloning the HPC Add-on code ........."
+echo  " **************************************** "
+echo  "   HPC Add-on codes at: $workdir/IMAT "
+echo  "   Job logs available at: $workdir/Jobs "
+echo  "   To launch the MATLAB, please use: "
+echo  "     module load matlab "
+echo  "     matlab & "
+echo " Dedicated node (1 core with 10GB of 1 hour) allocated for your MATLAB GUI based job submission ..!"
+echo  " *************************************** "
+git clone https://github.com/kaust-rccl/IMAT.git ;
+export MATLABPATH=$workdir/IMAT ;
+sed -i '250s|.*|ljsl = ['\'''$workdir/Jobs/''\'' release '\'''/''\''];|g' $MATLABPATH/+IntegrationScripts/+common/communicatingSubmitFcn.m
+sed -i '50s|.*|cd '$workdir'|g' $MATLABPATH/+IntegrationScripts/+common/communicatingJobWrapper.sh
+sed -i '46s|.*|rjsl = ['\'''$workdir/Jobs/''\'' release];|g' $MATLABPATH/configCluster.m
+srun --time=1:00:00 --mem=10GB -c 1 --pty bash
+```
+
+4. Load the MATLAB module
 ```
 module load matlab/R2023b
 ```
 
-4. export the correct timezone 
-```
-export TZ="Asia/Riyadh" 
-```
-
-5. Clone `IMAT` and export to MATLABPATH
-```
-cd $HOME
-git clone https://github.com/kaust-rccl/IMAT.git 
-export MATLABPATH=$HOME/IMAT 
-```
-
-6. Switch to $HOME/IMAT directory and run workdir.sh script to specify your working directory.
-```
-cd $HOME/IMAT
-./workdir.sh
-```
-
-> #### Note: If you want to reset your working directory to another one, You should rerun `workdir.sh` again.
-
-7. Run the MATLAB GUI.
+5. Run the MATLAB GUI.
 ```
 matlab &
 ```
@@ -81,6 +79,9 @@ ibex.AdditionalProperties.WallTime = ('1000');
 ibex.AdditionalProperties.EmailAddress = 'ahmed.khatab@kaust.edu.sa';  % Your Email address (please modify).
 ibex.AdditionalProperties.NumNodes = 1;      % Number of nodes requested 
 ibex.AdditionalProperties.ProcsPerNode = 2;     % 1 more than number of Matlab workers per node.
+% modify the line to point to the path of the private key file 
+% to use for passwordless authentication for IBEX
+ibex.AdditionalProperties.IdentityFile = '<path/to/identity/file>';
 % In the following line, replace <script-name> with the name of 
 % your m file without the ".m"
 % <number-of-workers> is the number of cpus your job will use.
@@ -114,6 +115,9 @@ ibex.AdditionalProperties.WallTime = ('1000');
 ibex.AdditionalProperties.EmailAddress = 'ahmed.khatab@kaust.edu.sa';  % Your Email address (please modify).
 ibex.AdditionalProperties.NumNodes = 1;      % Number of nodes requested 
 ibex.AdditionalProperties.ProcsPerNode = 9;     % 1 more than number of Matlab workers per node.
+% modify the line to point to the path of the private key file 
+% to use for passwordless authentication for IBEX
+ibex.AdditionalProperties.IdentityFile = '<path/to/identity/file>';
 % In the following line, replace <script-name> with the name of 
 % your m file without the ".m"
 % <number-of-workers> is the number of cpus your job will use.
@@ -145,6 +149,9 @@ configCluster
 ibex = parcluster('ibex');
 ibex.AdditionalProperties.WallTime = ('1000');
 ibex.AdditionalProperties.EmailAddress = 'ahmed.khatab@kaust.edu.sa';  % Your Email address (please modify).
+% modify the line to point to the path of the private key file 
+% to use for passwordless authentication for IBEX
+ibex.AdditionalProperties.IdentityFile = '<path/to/identity/file>';
 % In the following line, replace <script-name> with the name of 
 % your m file without the ".m"
 % <number-of-workers> is the number of cpus your job will use.
